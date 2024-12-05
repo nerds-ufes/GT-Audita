@@ -1,3 +1,4 @@
 # GT-Audita
 Auditabilidade
-* Auditabilidade da Caminhos
+* Auditabilidade de Caminhos
+* Auditabilidade de Logs
