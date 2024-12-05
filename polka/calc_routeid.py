@@ -41,9 +41,9 @@ def _main():
     ]
     # defining the transmission state for each node from h1 to h3
     o = [
-        [1, 0],     # s1
-        [1, 0, 0],  # s2
-        [1],        # s3
+        [1, 0, 1],     # s1
+        [1],  # s2
+        [1, 0, 0],  # s3
     ]
     print_poly(calculate_routeid(nodes, o, debug=DEBUG))
 
@@ -56,8 +56,8 @@ def _main():
     ]
     # defining the transmission state for each node from h1 to h3
     o = [
-        [1, 0],     # s3
-        [1, 0],     # s2
+        [1,0,0],     # s3
+        [1,0],     # s2
         [1],        # s1
     ]
 
