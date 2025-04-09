@@ -1,0 +1,34 @@
+/* -*- P4_16 -*- */
+#include <core.p4>
+#include <v1model.p4>
+
+#define HAVE_POLKA
+
+const bit<16> TYPE_IPV4 = 0x0800;
+const bit<16> TYPE_POLKA = 0x1234;
+
+const bit<8> REGULAR_VERSION = 0x01;
+const bit<8> PROBE_VERSION = 0xF1;
+
+#include "hdr_ethernet.p4"
+#include "hdr_ipv4.p4"
+#include "hdr_polka.p4"
+
+struct metadata {
+    bit<1>   apply_sr;
+    bit<9>   port;
+    bit<16>  switch_id;
+    polka_route_t route_id;
+}
+
+header polka_probe_t {
+    bit<32> timestamp;
+    bit<32> l_hash;
+}
+
+struct headers {
+    ethernet_t    ethernet;
+    polka_t       polka;
+    polka_probe_t polka_probe;
+    ipv4_t        ipv4;
+}
