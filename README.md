@@ -1,13 +1,95 @@
-# GT-Audita : Auditoria Transparente em Redes usando Blockchains
+# GT-Audita · 🔒📡 Auditoria de Tráfego em Redes com Blockchain
 
-A implementação segura de mecanismos de gestão de registros (logs) nos sistemas de acesso à Internet é fundamental para assegurar a integridade, a confidencialidade, e a disponibilidade das informações, conforme delineado pela Política Nacional de Segurança da Informação (PNSI). Dessa forma, as operadoras e os provedores de acesso se deparam com vários desafios para atender obrigações regulatórias e conformidade (compliance) com políticas de segurança. Por exemplo, um problema enfrentado pelos provedores é que os dados provenientes dos múltiplos sistemas coletores de logs estão sujeitos a serem alterados, apagados e eventualmente refutados.  Esses registros (logs) são fundamentais para realizar auditorias e análises forenses, dar suporte a investigações internas, e estabelecer linhas de base. Outro problema também presente é como implementar mecanismos de “prova de trânsito” atestando que um determinado tráfego (fluxo de pacotes) transitou por um caminho de nós (switches/roteadores)  pré-determinado. 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Build Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)]()
+[![GitHub Repo stars](https://img.shields.io/github/stars/nerds-ufes/GT-Audita?style=social)]()
 
-Com isso, o objetivo geral desta proposta é desenvolver um sistema para auditabilidade de acesso à rede e auditabilidade de caminho, ambos por meio do uso de blockchains.  O projeto baseia-se no uso de contratos inteligentes, executados em blockchains privadas (ou permissionadas), para propor um mecanismo de registro imutável e seguro que garante a transparência, imutabilidade e rastreabilidade para o processo de auditoria em sistemas de acesso à Internet considerando dois casos de uso:  (i) auditabilidade de acesso à rede e (ii) auditabilidade de caminho percorrido na rede.
+## 🧠 Sobre o Projeto
 
-* Auditabilidade de acesso à rede 
+**GT-Audita** é uma solução integrada para a **auditoria e rastreabilidade de acessos e fluxos de dados em redes IP**, combinando ferramentas de observabilidade com tecnologias de blockchain para garantir **transparência, integridade e conformidade regulatória**.
 
-Na auditabilidade de acesso à rede, o desafio é consolidar dados provenientes dos múltiplos sistemas coletores de logs (Firewall, DHCP e Radius) e adicionar uma camada de verificação dos dados na blockchain. Como caso de uso piloto, nosso foco será desenvolver a auditabilidade dos registros inicialmente para o PoP-ES (rede da UFES) pelo fato de oferecerem um processo básico para armazenamento dos registros dos acessos à rede. Este processo será atualizado e aprimorado guardando-se hashes criptográficos dos dados em contratos inteligentes.  
+O sistema busca atender aos princípios da Política Nacional de Segurança da Informação (PNSI), oferecendo uma abordagem robusta para gestão de incidentes, investigações forenses e prestação de contas.
 
-* Auditabilidade de caminho na rede
+---
 
-Na auditabilidade de caminho percorrido na rede, nosso caso de uso será desenvolver a auditabilidade inicialmente para redes cientes de caminho (path-aware networking) (Path-Sec[1] ) pelo fato de oferecerem descritores de caminhos auditáveis que poderão ser registrados na blockchain, e mecanismos de autenticação por salto, além de infraestrutura de chaves para assinatura na origem e destino para verificação de rotas como prova de trânsito [2,4]. Assim, contratos inteligentes serão utilizados para guardar, de forma transparente e irreversível, registros representando provas-de-trânsito dos pacotes. Vale ressaltar que essas redes estão implantadas em testbeds de experimentação e de produção servindo de base para uma prova de princípio realística.  
+## 🎯 Objetivos
+
+- 📜 Garantir **auditabilidade** de acessos e eventos de rede.
+- 🔐 Assegurar **integridade e imutabilidade** dos registros com blockchain.
+- 🕵️ Facilitar **investigações forenses** e análise de incidentes.
+- 🌐 Ser aplicável a ambientes diversos como ISPs, redes acadêmicas (ex: eduroam) e instituições públicas.
+
+---
+
+## 🧱 Arquitetura Geral
+
+```plaintext
+[ FIREWALL / DHCP / RADIUS ]
+            │
+       [ Logstash ]
+            │
+         [ Redis ]
+            │
+   [ Verificador de Logs ]
+            │
+  ┌──────────┴──────────┐
+  │                     │
+[ ElasticSearch ]   [ Blockchain (Besu + Solidity) ]
+                        │
+            [ Provas de Trânsito / Provas de Conexão <-> Hash dos Logs ]
+
+## 🧭 Auditabilidade de Caminho na Rede
+
+Para garantir **rastreabilidade de fluxos de pacotes**, o GT-Audita estende seu escopo para a **verificação de caminho em redes path-aware**, com foco inicial na arquitetura PolKA[^6]. Este modelo permite a **inserção de identificadores de rota (routeIDs) auditáveis** diretamente nos pacotes, além de prover mecanismos de autenticação por salto e infraestrutura de chaves para assinatura de origem e destino.
+
+> 🎯 **Objetivo**: Implementar um mecanismo de "prova de trânsito" com granularidade por fluxo, de forma eficiente e escalável.
+
+### ⚠️ Desafio de Escalabilidade
+
+As tecnologias blockchain atuais (como Hyperledger Besu) possuem limites práticos de escalabilidade — geralmente até dezenas de milhares de transações por segundo (TPS), o que contrasta com o throughput de switches que podem processar milhões de pacotes por segundo por interface.
+
+Para lidar com isso, propomos uma abordagem baseada em **sondas amostradas** (In-band Network Telemetry[^8]):
+
+- Cada fluxo monitorado tem uma **taxa de sondagem configurável** (ex: 10 sondas por segundo).
+- Essas sondas são pacotes reais, modificados para carregar metadados de verificação (routeID, timestamp, assinatura).
+- A granularidade da prova de trânsito é ajustável por configuração do fluxo.
+
+---
+
+### 🔄 Processo de Verificação de Caminho
+
+1. **Configuração (Controller)**  
+   - O controlador calcula um identificador de fluxo `flowID = H(porto, portd, ipo, ipd)`.
+   - Seleciona um caminho auditável `routeID` (ex: R=16d).
+   - Define a taxa de amostragem (e.g., 1 pacote/s).
+   - Configura o nó de borda de entrada (ingress edge).
+   - Implanta um contrato inteligente no Hyperledger Besu para armazenar e validar as sondas.
+
+2. **Configuração do Nó de Borda (Ingress Edge)**  
+   - Insere o `routeID` em todos os pacotes do fluxo.
+   - Escolhe aleatoriamente pacotes para funcionar como sondas conforme a taxa definida.
+   - Gera `timestamp` e campo de assinatura inicial nas sondas.
+
+3. **Assinatura pelos Nós de Núcleo (Core Nodes)**  
+   - Cada roteador no caminho computa uma **assinatura leve** dos dados de roteamento.
+   - Atualiza o campo de assinatura da sonda em cada salto.
+
+4. **Verificação (Egress Edge)**  
+   - Extrai os metadados dos pacotes ao saírem do domínio administrativo.
+   - Se o pacote for uma sonda, calcula `flowID`, e chama:
+     ```solidity
+     log_Probe(flowID, routeID, timestamp, signatureLog)
+     ```
+   - Essa transação representa a **prova registrada do caminho** seguido pela sonda.
+
+A verificação pode ser feita **em tempo real** (via eventos) ou **offline**, como parte de auditorias ou análises forenses de tráfego.
+
+---
+
+### 🔐 Blockchain e Contratos Inteligentes
+
+- **Hyperledger Besu** será o framework blockchain utilizado.
+- Os **contratos em Solidity** armazenarão os registros de sonda e validações.
+- A assinatura criptográfica acumulada nos pacotes permite verificar se o fluxo seguiu o caminho esperado.
+
+---
