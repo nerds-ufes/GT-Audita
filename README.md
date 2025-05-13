@@ -1,13 +1,40 @@
-# GT-Audita : Auditoria Transparente em Redes usando Blockchains
+# GT-Audita · 🔒📡 Auditoria de Tráfego em Redes com Blockchain
 
-A implementação segura de mecanismos de gestão de registros (logs) nos sistemas de acesso à Internet é fundamental para assegurar a integridade, a confidencialidade, e a disponibilidade das informações, conforme delineado pela Política Nacional de Segurança da Informação (PNSI). Dessa forma, as operadoras e os provedores de acesso se deparam com vários desafios para atender obrigações regulatórias e conformidade (compliance) com políticas de segurança. Por exemplo, um problema enfrentado pelos provedores é que os dados provenientes dos múltiplos sistemas coletores de logs estão sujeitos a serem alterados, apagados e eventualmente refutados.  Esses registros (logs) são fundamentais para realizar auditorias e análises forenses, dar suporte a investigações internas, e estabelecer linhas de base. Outro problema também presente é como implementar mecanismos de “prova de trânsito” atestando que um determinado tráfego (fluxo de pacotes) transitou por um caminho de nós (switches/roteadores)  pré-determinado. 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Build Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)]()
+[![GitHub Repo stars](https://img.shields.io/github/stars/nerds-ufes/GT-Audita?style=social)]()
 
-Com isso, o objetivo geral desta proposta é desenvolver um sistema para auditabilidade de acesso à rede e auditabilidade de caminho, ambos por meio do uso de blockchains.  O projeto baseia-se no uso de contratos inteligentes, executados em blockchains privadas (ou permissionadas), para propor um mecanismo de registro imutável e seguro que garante a transparência, imutabilidade e rastreabilidade para o processo de auditoria em sistemas de acesso à Internet considerando dois casos de uso:  (i) auditabilidade de acesso à rede e (ii) auditabilidade de caminho percorrido na rede.
+## 🧠 Sobre o Projeto
 
-* Auditabilidade de acesso à rede 
+**GT-Audita** é uma solução integrada para a **auditoria e rastreabilidade de acessos e fluxos de dados em redes**, combinando ferramentas de observabilidade com tecnologias de blockchain para garantir **transparência, integridade e conformidade regulatória**.
 
-Na auditabilidade de acesso à rede, o desafio é consolidar dados provenientes dos múltiplos sistemas coletores de logs (Firewall, DHCP e Radius) e adicionar uma camada de verificação dos dados na blockchain. Como caso de uso piloto, nosso foco será desenvolver a auditabilidade dos registros inicialmente para o PoP-ES (rede da UFES) pelo fato de oferecerem um processo básico para armazenamento dos registros dos acessos à rede. Este processo será atualizado e aprimorado guardando-se hashes criptográficos dos dados em contratos inteligentes.  
+O sistema busca atender aos princípios da Política Nacional de Segurança da Informação (PNSI), oferecendo uma abordagem robusta para gestão de incidentes, investigações forenses e prestação de contas.
 
-* Auditabilidade de caminho na rede
+---
 
-Na auditabilidade de caminho percorrido na rede, nosso caso de uso será desenvolver a auditabilidade inicialmente para redes cientes de caminho (path-aware networking) (Path-Sec[1] ) pelo fato de oferecerem descritores de caminhos auditáveis que poderão ser registrados na blockchain, e mecanismos de autenticação por salto, além de infraestrutura de chaves para assinatura na origem e destino para verificação de rotas como prova de trânsito [2,4]. Assim, contratos inteligentes serão utilizados para guardar, de forma transparente e irreversível, registros representando provas-de-trânsito dos pacotes. Vale ressaltar que essas redes estão implantadas em testbeds de experimentação e de produção servindo de base para uma prova de princípio realística.  
+## 🎯 Objetivos
+
+- 📜 Garantir **auditabilidade** de acessos e eventos de rede.
+- 🔐 Assegurar **integridade e imutabilidade** dos registros com blockchain.
+- 🕵️ Facilitar **investigações forenses** e análise de incidentes.
+- 🌐 Ser aplicável a ambientes diversos como ISPs, redes acadêmicas (ex: eduroam) e instituições públicas.
+
+---
+
+## 🧱 Arquitetura Geral
+
+```plaintext
+[ FIREWALL / DHCP / RADIUS ]
+            │
+       [ Logstash ]
+            │
+         [ Redis ]
+            │
+   [ Verificador de Logs ]
+            │
+  ┌──────────┴──────────┐
+  │                     │
+[ ElasticSearch ]   [ Blockchain (Besu + Solidity) ]
+                        │
+            [ Provas de Trânsito / Provas de Conexão <-> Hash dos Logs ]
+
