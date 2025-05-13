@@ -1,0 +1,42 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/home/leticia/Desktop/GT-Audita/auditapath/blockchain/contracts/PoT.sol": {
+      "lastModificationDate": 1747099571683,
+      "contentHash": "9812e466372218150f598ed20de7b0cb",
+      "sourceName": "contracts/PoT.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.8.17 <0.9.0"
+      ],
+      "artifacts": [
+        "PoTFactory",
+        "ProofOfTransit"
+      ]
+    }
+  }
+}
