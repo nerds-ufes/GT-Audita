@@ -5,7 +5,7 @@ from script.tester import Polka, PolkaProbe
 from script.utils import calc_digests, polka_route_ids, get_ingress_edge, calc_flow_id, hash_flow_id
 
 ENDPOINT_URL = "http://localhost:5000/"
-EDGE_NODE_ADDRESS = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+EDGE_NODE_ADDRESS = "0xf17f52151EbEF6C7334FAD080c5704D77216b732"
 
 def call_deploy_flow_contract(flowId, first_host="h1", last_host="h10"):
     print(f"\n*** Deploying the contract related to the flowId {flowId}")
