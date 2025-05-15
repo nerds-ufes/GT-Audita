@@ -4,10 +4,13 @@ from web3 import Web3
 from web3.exceptions import Web3RPCError
 import json
 from http import HTTPStatus
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
 api = Api(app)
 
+load_dotenv()
 
 # Conectar-se ao Ganache (assumindo que o Ganache está rodando na porta padrão 8545)
 w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
@@ -19,47 +22,27 @@ else:
     print("Não foi possível conectar-se à blockchain")
     exit()
 
-## Endereço do contrato ##
-
-# Endereço da conta que fez a implantação (pode ser obtido no Remix ou Metamask)
-deployer_address =  w3.eth.accounts[0]
+# Endereço da conta que fez a implantação 
+deployer_address = "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"  # Conta padrão de testes
 print("Endereço da conta que realizou deploy: " + deployer_address)
 
-# Função para obter a transação de deploy do contrato
-def get_contract_address(deployer_address, start_block=0, end_block='latest'):    
-    contract_address = ""
-    # Obtem o bloco final (ou o último bloco se 'latest' for passado)
-    if end_block == 'latest':
-        end_block = w3.eth.block_number
+## Endereço do contrato ##
+# Path arquivo abi
+smart_contract_name = 'PoTFactory'
+field_json = f'{smart_contract_name}Module#{smart_contract_name}'
+abi_file_path = '../blockchain/ignition/deployments/chain-1337/deployed_addresses.json'
+# Carregando a abi do arquivo json
+with open(abi_file_path, 'r') as json_file:
+    data = json.load(json_file)
     
-    # Iterar pelos blocos entre o intervalo fornecido
-    for block_number in range(start_block, end_block + 1):
-        block = w3.eth.get_block(block_number, full_transactions=True)
-        
-        for tx in block.transactions:
-            # Verifica se o endereço está envolvido na transação
-            if tx['from'].lower() == deployer_address.lower() or tx['to'] and tx['to'].lower() == deployer_address.lower():
-                # Obter o recibo da transação (contém o endereço do contrato)
-                tx_receipt = w3.eth.get_transaction_receipt(tx['hash'])
-                
-                # Se a transação for uma implantação de contrato, obtemos o endereço
-                if tx_receipt['contractAddress']:
-                    contract_address = tx_receipt['contractAddress']
-    
-    if contract_address == "":
-        print("Erro na obtenção do endereço do contrato!")
-        exit()
-
-    return contract_address
-
-contract_address = get_contract_address(deployer_address)
+contract_address = data[field_json]
 print(f"Endereço do contrato implantado: {contract_address}")
 
 ## ABI do contrato ## 
- # Path arquivo abi
+# Path arquivo abi
 smart_contract_name = 'PoTFactory'
 abi_file_path = f'../blockchain/artifacts/contracts/PoT.sol/{smart_contract_name}.json'
- # Carregando a abi do arquivo json
+# Carregando a abi do arquivo json
 with open(abi_file_path, 'r') as json_file:
     data = json.load(json_file)
     
@@ -69,12 +52,12 @@ abi = data['abi']
 # Obter instância do contrato
 contract = w3.eth.contract(address=contract_address, abi=abi)
 
-## Ganache accounts ##
+## Contas padrão de testes do Besu ##
 # Endereço da controller
-sender_address = w3.eth.accounts[1]
+controller_address = "0x627306090abaB3A6e1400e9345bC60c78a8BEf57"
 
 # Endereço do nó de saída
-egress_address = w3.eth.accounts[2]
+egress_address = "0xf17f52151EbEF6C7334FAD080c5704D77216b732"
 print('Endereço do nó de saída: ' + egress_address)
 
 # Endereço do auditor
@@ -85,10 +68,10 @@ print('Endereço do nó de saída: ' + egress_address)
 def call_echo(message):
     # Prepara a transação para chamar a função `echo`
     transaction = contract.functions.echo(message).build_transaction({
-        'from': sender_address,
+        'from': controller_address,
         'gas': 2000000,
         'gasPrice': w3.to_wei('20', 'gwei'),
-        'nonce': w3.eth.get_transaction_count(sender_address),
+        'nonce': w3.eth.get_transaction_count(controller_address),
     })
 
     # Envia a transação
@@ -108,47 +91,78 @@ def call_echo(message):
 
 # Função para chamar `newFlow`
 def call_newFlow(newFlowContract):
-    # Prepara a transação para chamar a função `newFlow`
-    transaction = contract.functions.newFlow(newFlowContract['flowId'], newFlowContract['edgeAddr'], newFlowContract['routeId']).build_transaction({
-        'from': sender_address,
+
+    # Prepara a transação
+    nonce = w3.eth.get_transaction_count(controller_address)
+
+    tx = contract.functions.newFlow(
+        newFlowContract['flowId'],
+        newFlowContract['edgeAddr'],
+        newFlowContract['routeId']
+    ).build_transaction({
+        'from': controller_address,
         'gas': 2000000,
         'gasPrice': w3.to_wei('20', 'gwei'),
-        'nonce': w3.eth.get_transaction_count(sender_address),
+        'nonce': nonce,
+        'chainId': w3.eth.chain_id  
     })
 
-    # Envia a transação
-    tx_hash = w3.eth.send_transaction(transaction)
+    private_key = os.getenv("CONTROLLER_PRIVATE_KEY")
+    # Assina a transação
+    signed_tx = w3.eth.account.sign_transaction(tx, private_key)
+
+    # Envia a transação assinada
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
 
     return w3.to_hex(tx_hash)
 
 
 # Função para chamar `setFlowProbeHash` e emitir o evento
 def call_setFlowProbeHash(newRefSig):
-    # Prepara a transação para chamar a função `setFlowProbeHash`
-    transaction = contract.functions.setFlowProbeHash(newRefSig['flowId'], newRefSig['timestamp'], newRefSig['lightMultSig']).build_transaction({
-        'from': sender_address,
+
+    tx = contract.functions.setFlowProbeHash(
+        newRefSig['flowId'],
+        newRefSig['timestamp'],
+        newRefSig['lightMultSig']
+    ).build_transaction({
+        'from': controller_address,
         'gas': 2000000,
         'gasPrice': w3.to_wei('20', 'gwei'),
-        'nonce': w3.eth.get_transaction_count(sender_address),
+        'nonce': w3.eth.get_transaction_count(controller_address),
+        'chainId': w3.eth.chain_id  
     })
 
-    # Envia a transação
-    tx_hash = w3.eth.send_transaction(transaction)
+    # Assina a transação
+    private_key = os.getenv("CONTROLLER_PRIVATE_KEY")
+    signed_tx = w3.eth.account.sign_transaction(tx, private_key)
+
+    # Envia a transação assinada
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
 
     return w3.to_hex(tx_hash)
 
 # Função para chamar `logProbe` e emitir o evento
 def call_logFlowProbeHash(newlogProbe):
-    # Prepara a transação para chamar a função `logProbe`
-    transaction = contract.functions.logFlowProbeHash(newlogProbe['flowId'], newlogProbe['timestamp'], newlogProbe['lightMultSig']).build_transaction({
+
+    # Prepara a transação para chamar a função `logProbe
+    tx = contract.functions.logFlowProbeHash(
+        newlogProbe['flowId'], 
+        newlogProbe['timestamp'], 
+        newlogProbe['lightMultSig']
+    ).build_transaction({
         'from': egress_address,
         'gas': 2000000,
         'gasPrice': w3.to_wei('20', 'gwei'),
         'nonce': w3.eth.get_transaction_count(egress_address),
+        'chainId': w3.eth.chain_id  
     })
 
-    # Envia a transação
-    tx_hash = w3.eth.send_transaction(transaction)
+   # Assina a transação
+    private_key = os.getenv("EGRESS_PRIVATE_KEY")
+    signed_tx = w3.eth.account.sign_transaction(tx, private_key)
+
+    # Envia a transação assinada
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
 
     return w3.to_hex(tx_hash)
 
@@ -172,7 +186,7 @@ def call_getFlowCompliance(flowId):
     return status, result
 
 def verify_tx_status(tx_hash):
-    tx_receipt = w3.eth.get_transaction_receipt(tx_hash)
+    tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     if tx_receipt:
         if tx_receipt['status'] == 1:
             print("logProbe: A transação foi executada com sucesso.")
