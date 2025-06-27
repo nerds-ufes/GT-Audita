@@ -22,8 +22,9 @@ else:
     print("Não foi possível conectar-se à blockchain")
     exit()
 
-# Endereço da conta que fez a implantação 
+# Endereço da conta que fez a implantação
 deployer_address = "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"  # Conta padrão de testes
+deployer_private_key = "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"
 print("Endereço da conta que realizou deploy: " + deployer_address)
 
 ## Endereço do contrato ##
@@ -34,7 +35,7 @@ abi_file_path = '../blockchain/ignition/deployments/chain-1337/deployed_addresse
 # Carregando a abi do arquivo json
 with open(abi_file_path, 'r') as json_file:
     data = json.load(json_file)
-    
+
 contract_address = data[field_json]
 print(f"Endereço do contrato implantado: {contract_address}")
 
@@ -55,9 +56,12 @@ contract = w3.eth.contract(address=contract_address, abi=abi)
 ## Contas padrão de testes do Besu ##
 # Endereço da controller
 controller_address = "0x627306090abaB3A6e1400e9345bC60c78a8BEf57"
+controller_private_key = "0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3"
+print('Endereço do nó de controle: ' + controller_address)
 
 # Endereço do nó de saída
 egress_address = "0xf17f52151EbEF6C7334FAD080c5704D77216b732"
+egress_private_key = "0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f"
 print('Endereço do nó de saída: ' + egress_address)
 
 # Endereço do auditor
@@ -74,8 +78,11 @@ def call_echo(message):
         'nonce': w3.eth.get_transaction_count(controller_address),
     })
 
+    # Assinar transacao
+    signed_tx = w3.eth.account.sign_transaction(transaction, controller_private_key)
+
     # Envia a transação
-    tx_hash = w3.eth.send_transaction(transaction)
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
 
     # Espera a transação ser minerada
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
@@ -107,9 +114,8 @@ def call_newFlow(newFlowContract):
         'chainId': w3.eth.chain_id  
     })
 
-    private_key = os.getenv("CONTROLLER_PRIVATE_KEY")
     # Assina a transação
-    signed_tx = w3.eth.account.sign_transaction(tx, private_key)
+    signed_tx = w3.eth.account.sign_transaction(tx, controller_private_key)
 
     # Envia a transação assinada
     tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
@@ -133,8 +139,7 @@ def call_setFlowProbeHash(newRefSig):
     })
 
     # Assina a transação
-    private_key = os.getenv("CONTROLLER_PRIVATE_KEY")
-    signed_tx = w3.eth.account.sign_transaction(tx, private_key)
+    signed_tx = w3.eth.account.sign_transaction(tx, controller_private_key)
 
     # Envia a transação assinada
     tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
@@ -156,10 +161,8 @@ def call_logFlowProbeHash(newlogProbe):
         'nonce': w3.eth.get_transaction_count(egress_address),
         'chainId': w3.eth.chain_id  
     })
-
-   # Assina a transação
-    private_key = os.getenv("EGRESS_PRIVATE_KEY")
-    signed_tx = w3.eth.account.sign_transaction(tx, private_key)
+    
+    signed_tx = w3.eth.account.sign_transaction(tx, egress_private_key)
 
     # Envia a transação assinada
     tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
