@@ -192,13 +192,13 @@ def verify_tx_status(tx_hash):
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     if tx_receipt:
         if tx_receipt['status'] == 1:
-            print("logProbe: A transação foi executada com sucesso.")
+            print("--> A transação foi executada com sucesso.")
             return HTTPStatus.OK
         else:
-            print("logProbe: A transação falhou.")
+            print("--> A transação falhou.")
             return HTTPStatus.INTERNAL_SERVER_ERROR
     else:
-        print("logProbe: A transação ainda está pendente.")
+        print("--> A transação ainda está pendente.")
         return HTTPStatus.ACCEPTED
 
 
