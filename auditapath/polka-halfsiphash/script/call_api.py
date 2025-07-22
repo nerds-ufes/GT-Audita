@@ -17,7 +17,7 @@ def call_deploy_flow_contract(flowId, first_host="h1", last_host="h10"):
     }
 
     req = request.Request(
-        ENDPOINT_URL + "/deployFlowContract",
+        ENDPOINT_URL + "deployFlowContract",
         data = json.dumps(data_dct).encode('utf-8'),
         headers={'Content-Type': 'application/json'}
     )
@@ -25,9 +25,7 @@ def call_deploy_flow_contract(flowId, first_host="h1", last_host="h10"):
 
     if(res.status == 201):
         print("Successfully deployed!")
-        print("Transaction hash: " + res.read().decode('utf-8').strip())
-
-    print("\n")
+        print("Transaction hash: " + res.read().decode('utf-8').strip(), end="\n\n")
 
 def call_set_ref_sig(pkt):
     polka_pkt = pkt.getlayer(Polka)
@@ -98,4 +96,23 @@ def call_log_probe(pkt):
         if e.code == 500:
             print("\n*** Logging probe signature in flow " + flow_id)
             print("Erro: " + e.read().decode('utf-8'))
-    
+
+def call_get_flow_compliance(flowId):
+    req = request.Request(
+        ENDPOINT_URL + f"getFlowCompliance/{flowId}",
+        headers={'Content-Type': 'application/json'}
+    )
+
+    try:
+        res = request.urlopen(req)
+        data = json.loads(res.read().decode('utf8'))
+        print("\n*** Getting flow compliance")
+        print("FlowId: " + flowId)
+        print("RouteId: " + data[1])
+        print(f"Probe Success: {data[0]['success']}")
+        print(f"Probe Fail: {data[0]['fail']}")
+        print(f"Probe Null: {data[0]['nil']}\n\n")
+    except error.HTTPError as e:
+        if e.code == 500:
+            print("\n*** Getting compliance of flow " + flowId)
+            print("Erro: " + e.read().decode('utf-8'))
