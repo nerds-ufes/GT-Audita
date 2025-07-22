@@ -3,7 +3,7 @@ from time import sleep
 from scapy.all import Packet
 
 from script.tester import linear_topology, Polka, PolkaProbe, integrity, start_sniffing
-from script.call_api import call_deploy_flow_contract, call_set_ref_sig, hash_flow_id, call_log_probe
+from script.call_api import call_deploy_flow_contract, call_set_ref_sig, hash_flow_id, call_log_probe, call_get_flow_compliance
 from .utils import calc_digests
 
 def integrity(net: Mininet):
@@ -11,20 +11,48 @@ def integrity(net: Mininet):
     Test the integrity of the network, this is to be used in a suite of tests
     """
 
-    first_host = net.get("h1")
-    assert first_host is not None, "Host h1 not found"
-    last_host = net.get(
-        "h10"
-    )  # h11 is right beside h1, so wouldn't traverse all switches
-    assert last_host is not None, "Host h10 not found"
+    while(1):
+        action = input("\n*** Action[(1)-Send Probe|(2)-Flow Compliance|(3)-Exit]: ")
+        print("\n\n")
+        if action == "1":
+            print("*** Sending Probe(s)")
+            first_host_name = input("First host: ") 
+            first_host = net.get(first_host_name)
+            assert first_host is not None, "Host " + first_host_name + " not found"
+         
+            last_host_name = input("Last host: ")
+            last_host = net.get(last_host_name)  # h11 is right beside h1, so wouldn't traverse all switches
+            assert last_host is not None, "Host " + last_host_name + " not found"
+            
+            num_probes = input("Number of probes: ")
 
-    info(
-        "\n*** Testing network integrity\n"
-        f"    a ping from {first_host.name} to {last_host.name},\n"
-        "    goes through all core switches.\n"
-    )
-    
-    first_host.cmd('ping -c 1', last_host.IP())
+            info(
+                "\n*** Testing network integrity\n"
+                f"    a ping from {first_host.name} to {last_host.name},\n"
+                "    goes through all core switches.\n"
+            )
+            
+            first_host.cmd('ping -c ' + num_probes, last_host.IP())
+            sleep(int(num_probes)*6)
+            
+        elif action == "2":
+            print("*** Chose the flow")
+            first_host_name = input("First host: ")
+            first_host = net.get(first_host_name)
+            assert first_host is not None, "Host " + first_host_name + " not found"
+
+            last_host_name = input("Last host: ")
+            last_host = net.get(last_host_name)  # h11 is right beside h1, so wouldn't traverse all switches
+            assert last_host is not None, "Host " + last_host_name + " not found"
+            
+            print(f"{first_host}({first_host.IP()}) --> {last_host}({last_host.IP()})")
+
+            call_get_flow_compliance(hash_flow_id(first_host.IP(), "0", last_host.IP(), "0"))
+
+            sleep(2)
+
+        elif action == "3":
+            break
 
 def connect_api():
     """
@@ -72,7 +100,7 @@ def connect_api():
 
         
         call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
-        call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
+        #call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
 
         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
