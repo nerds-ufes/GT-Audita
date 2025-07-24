@@ -72,7 +72,7 @@ def call_log_probe(pkt):
     flow_id = calc_flow_id(pkt)
     route_id = polka_pkt.route_id
     timestamp = probe_pkt.timestamp
-    light_mult_sig = hex(probe_pkt.l_hash)
+    light_mult_sig = f"{probe_pkt.l_hash:#010x}"
 
     data_dct = {
         "flowId": str(flow_id),
