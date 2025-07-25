@@ -6,7 +6,7 @@ contract ProofOfTransit{
     uint private startTime;
     
     mapping(string => string) public probHash;
-    logStructure public current_route_id_audit;
+    logStructure public currentRouteIdAudit;
 
     struct logStructure{
         uint probeFailAmount;
@@ -28,25 +28,23 @@ contract ProofOfTransit{
     }
 
     modifier isEgressEdge(address senderAddr) {
-        require(senderAddr == current_route_id_audit.egressEdge, "Caller is not egress edge");
+        require(senderAddr == currentRouteIdAudit.egressEdge, "Caller is not egress edge");
         _;
     }
-
     
     constructor(address controllerAddr, address egress_edgeAddr, string memory routeId) {
         controller = controllerAddr;
         startTime = block.timestamp;
         
-        current_route_id_audit.probeFailAmount = 0;
-        current_route_id_audit.probeSuccessAmount = 0;
-        current_route_id_audit.probeNullAmount = 0;
+        currentRouteIdAudit.probeFailAmount = 0;
+        currentRouteIdAudit.probeSuccessAmount = 0;
+        currentRouteIdAudit.probeNullAmount = 0;
 
-        current_route_id_audit.egressEdge = egress_edgeAddr;
-        current_route_id_audit.routeId = routeId;
+        currentRouteIdAudit.egressEdge = egress_edgeAddr;
+        currentRouteIdAudit.routeId = routeId;
    
         emit ControllerSet(address(0), controller);
     }
-
 
     /* POT FUNCTIONS */
     function changeController(address newController, address senderAddr) public isController(senderAddr) {
@@ -55,16 +53,17 @@ contract ProofOfTransit{
     }
 
     function changeRouteIdAndEgressEdge(string memory newRouteId, address newEgressEdge, address senderAddr) public isController(senderAddr) {
-        current_route_id_audit.lastTimestamp = block.timestamp;
+        currentRouteIdAudit.lastTimestamp = block.timestamp;
 
-        routesHistory.push(current_route_id_audit);
+        routesHistory.push(currentRouteIdAudit);
 
-        current_route_id_audit.probeFailAmount = 0;
-        current_route_id_audit.probeSuccessAmount = 0;
-        current_route_id_audit.probeNullAmount = 0;
+        currentRouteIdAudit.probeFailAmount = 0;
+        currentRouteIdAudit.probeSuccessAmount = 0;
+        currentRouteIdAudit.probeNullAmount = 0;
 
-        current_route_id_audit.egressEdge = newEgressEdge;
-        current_route_id_audit.routeId = newRouteId;
+        currentRouteIdAudit.egressEdge = newEgressEdge;
+        currentRouteIdAudit.routeId = newRouteId;
+        currentRouteIdAudit.lastTimestamp = 0;
     }
 
     function getController() external view returns (address) {
@@ -79,22 +78,32 @@ contract ProofOfTransit{
 
     function logProbe(string memory id_x,string memory sig, address senderAddr) public isEgressEdge(senderAddr){
         if (compareStrings(probHash[id_x],"")) {
-            current_route_id_audit.probeNullAmount += 1;
+            currentRouteIdAudit.probeNullAmount += 1;
         } else if (compareStrings(probHash[id_x],sig)){
-            current_route_id_audit.probeSuccessAmount += 1;
+            currentRouteIdAudit.probeSuccessAmount += 1;
         } else {
-            current_route_id_audit.probeFailAmount += 1;
+            currentRouteIdAudit.probeFailAmount += 1;
             emit ProbeFail();
         }
     }
 
     function getCompliance() public view returns (uint, uint, uint, string memory) {
-        return (current_route_id_audit.probeSuccessAmount, 
-                current_route_id_audit.probeFailAmount,
-                current_route_id_audit.probeNullAmount,
-                current_route_id_audit.routeId  );
+        return (currentRouteIdAudit.probeSuccessAmount, 
+                currentRouteIdAudit.probeFailAmount,
+                currentRouteIdAudit.probeNullAmount,
+                currentRouteIdAudit.routeId);
     }
 
+    function getSizeRoutesHistory() public view returns (uint) {
+        return routesHistory.length;
+    }
+
+    function getComplianceOfRouteHistoryIndex(uint index) public view returns (uint, uint, uint, string memory) {
+        return (routesHistory[index].probeSuccessAmount, 
+                routesHistory[index].probeFailAmount,
+                routesHistory[index].probeNullAmount,
+                routesHistory[index].routeId);
+    }
 
     /* AUX FUNCTIONS */
     function compareStrings(string memory a, string memory b) internal pure returns (bool) {
@@ -143,6 +152,14 @@ contract PoTFactory{
         pot.changeRouteIdAndEgressEdge(newRouteID, newEgressEdge, msg.sender);
     }
 
+    function getFlowSizeRoutesHistory(string memory flowId) public view isFlowRegistered(flowId) returns (uint sizeRoutesHistory){
+        ProofOfTransit pot = ProofOfTransit(flowPOT[flowId]);
+
+        sizeRoutesHistory = pot.getSizeRoutesHistory();
+
+        return sizeRoutesHistory;
+    }     
+
     function getFlowCompliance(string memory flowId) public view isFlowRegistered(flowId) returns (uint success, uint fail, uint nil, string memory routeId){
         ProofOfTransit pot = ProofOfTransit(flowPOT[flowId]);
 
@@ -151,4 +168,11 @@ contract PoTFactory{
         return (success, fail, nil, routeId);
     }
 
+    function getFlowComplianceOfRouteHistoryIndex(string memory flowId, uint index) public view isFlowRegistered(flowId) returns (uint success, uint fail, uint nil, string memory routeId){
+        ProofOfTransit pot = ProofOfTransit(flowPOT[flowId]);
+
+        (success, fail, nil, routeId) = pot.getComplianceOfRouteHistoryIndex(index);
+
+        return (success, fail, nil, routeId);
+    }
 }
