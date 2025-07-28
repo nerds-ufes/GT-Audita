@@ -188,6 +188,19 @@ def call_getFlowCompliance(flowId):
     
     return status, result
 
+def call_getFlowSizeRoutesHistory(flowId):
+    # Chama a função `getFlowSizeRoutesHistory`
+
+    result = 0
+    try:
+        result = contract.functions.getFlowSizeRoutesHistory(flowId).call()
+    
+    except Web3RPCError as e:
+        status = HTTPStatus.INTERNAL_SERVER_ERROR
+        result = e.rpc_response['error']['message']
+    
+    return status, result
+
 def verify_tx_status(tx_hash):
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     if tx_receipt:
@@ -319,6 +332,16 @@ def getFlowCompliance(flowId):
     
     return jsonify(response), status
 
+@app.route('/getFlowSizeRoutesHistory/<flowId>', methods=['GET'])
+def getFlowSizeRoutesHistory(flowId):
+    status, result = call_getFlowSizeRoutesHistory(flowId)
+
+    if status == HTTPStatus.OK:
+        response = [result["size"]]
+    else:
+        response = result
+
+    return jsonify(response), status
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)
