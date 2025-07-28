@@ -169,6 +169,31 @@ def call_logFlowProbeHash(newlogProbe):
 
     return w3.to_hex(tx_hash)
 
+def call_setRouteId(newRouteAndEdge):
+
+    # Prepara a transação
+    nonce = w3.eth.get_transaction_count(controller_address)
+
+    tx = contract.functions.setRouteId(
+        newRouteAndEdge['flowId'],
+        newRouteAndEdge['routeId'],
+        newRouteAndEdge['newEdgeAddr']
+    ).build_transaction({
+        'from': controller_address,
+        'gas': 2000000,
+        'gasPrice': w3.to_wei('20', 'gwei'),
+        'nonce': nonce,
+        'chainId': w3.eth.chain_id  
+    })
+
+    # Assina a transação
+    signed_tx = w3.eth.account.sign_transaction(tx, controller_private_key)
+
+    # Envia a transação assinada
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+
+    return w3.to_hex(tx_hash)
+
 def call_getFlowCompliance(flowId):
     # Chama a função `getFlowCompliance`
 
@@ -333,6 +358,26 @@ def logProbe():
     
     return jsonify(message), status_http
 
+
+@app.route('/setRouteId', methods=['POST'])
+def setRouteId():
+    data = request.get_json()
+
+    if 'flowId' not in data or 'newRouteId' not in data or 'newEdgeAddr' not in data:
+        return jsonify({"error": "Invalid Data"}), HTTPStatus.BAD_REQUEST
+    
+    newRouteAndEdge = {
+        "flowId": data['flowId'],
+        "newRouteId": data['newRouteId'],
+        "newEdgeAddr": data['newEdgeAddr']
+    }
+
+    tx_hash = call_setRouteId(newRouteAndEdge)
+
+    verify_tx_status(tx_hash)
+
+    return jsonify(tx_hash), HTTPStatus.CREATED
+
 @app.route('/getFlowCompliance/<flowId>', methods=['GET'])
 def getFlowCompliance(flowId):
     status, result = call_getFlowCompliance(flowId)
@@ -363,9 +408,10 @@ def getFlowSizeRoutesHistory(flowId):
 
     return jsonify(response), status
 
-@app.route('/getFlowComplianceOfRouteHistoryIndex/<flowId>', methods=['GET'])
+@app.route('/getFlowComplianceOfRouteHistoryIndex/<flowId>/<index>', methods=['GET'])
 def getFlowComplianceOfRouteHistoryIndex(flowId, index):
 
+    index = int(index)
     status, result = call_getFlowComplianceOfRouteHistoryIndex(flowId, index)
 
     if status == HTTPStatus.OK:
