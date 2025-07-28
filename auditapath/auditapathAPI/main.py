@@ -176,7 +176,7 @@ def call_setRouteId(newRouteAndEdge):
 
     tx = contract.functions.setRouteId(
         newRouteAndEdge['flowId'],
-        newRouteAndEdge['routeId'],
+        newRouteAndEdge['newRouteId'],
         newRouteAndEdge['newEdgeAddr']
     ).build_transaction({
         'from': controller_address,
