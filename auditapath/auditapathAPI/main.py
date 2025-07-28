@@ -194,7 +194,8 @@ def call_getFlowSizeRoutesHistory(flowId):
     result = 0
     try:
         result = contract.functions.getFlowSizeRoutesHistory(flowId).call()
-    
+        status = HTTPStatus.OK
+
     except Web3RPCError as e:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         result = e.rpc_response['error']['message']
@@ -337,7 +338,7 @@ def getFlowSizeRoutesHistory(flowId):
     status, result = call_getFlowSizeRoutesHistory(flowId)
 
     if status == HTTPStatus.OK:
-        response = [result["size"]]
+        response = [result]
     else:
         response = result
 
