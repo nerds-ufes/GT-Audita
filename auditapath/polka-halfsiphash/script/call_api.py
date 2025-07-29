@@ -157,7 +157,7 @@ def call_get_flow_compliance_consolidation(flowId):
         
     print("\n*** Getting flow compliance consolidation")
     print("FlowId: " + flowId)
-    print("Qtt of routes in history: " + size)
+    print(f"Qtt of routes in history: {size}")
     
     for i in range(0, size):
         req = request.Request(
