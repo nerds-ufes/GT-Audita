@@ -27,6 +27,26 @@ def call_deploy_flow_contract(flowId, first_host="h1", last_host="h10"):
         print("Successfully deployed!")
         print("Transaction hash: " + res.read().decode('utf-8').strip(), end="\n\n")
 
+def call_set_new_route(flowId, first_host, last_host):
+    print(f"\n*** Setting new route to the flowId {flowId}")
+
+    data_dct = {
+        "flowId": str(flowId),
+        "newRouteId": str(polka_route_ids[first_host][last_host]),
+        "newRdgeAddr": EDGE_NODE_ADDRESS
+    }
+
+    req = request.Request(
+        ENDPOINT_URL + "setRouteId",
+        data = json.dumps(data_dct).encode('utf-8'),
+        headers={'Content-Type': 'application/json'}
+    )
+    res = request.urlopen(req)
+
+    if(res.status == 201):
+        print("Successfully deployed!")
+        print("Transaction hash: " + res.read().decode('utf-8').strip(), end="\n\n")
+
 def call_set_ref_sig(pkt):
     polka_pkt = pkt.getlayer(Polka)
     assert polka_pkt is not None, "❌ Polka layer not found"
@@ -106,7 +126,7 @@ def call_get_flow_compliance(flowId):
     try:
         res = request.urlopen(req)
         data = json.loads(res.read().decode('utf8'))
-        print("\n*** Getting flow compliance")
+        print("\n*** Getting flow compliance of current route")
         print("FlowId: " + flowId)
         print("RouteId: " + data[1])
         print(f"Probe Success: {data[0]['success']}")
@@ -115,4 +135,42 @@ def call_get_flow_compliance(flowId):
     except error.HTTPError as e:
         if e.code == 500:
             print("\n*** Getting compliance of flow " + flowId)
+            print("Erro: " + e.read().decode('utf-8'))
+
+call_get_flow_compliance_consolidation
+def call_get_flow_compliance_consolidation(flowId):
+    req = request.Request(
+        ENDPOINT_URL + f"getFlowSizeRoutesHistory/{flowId}",
+        headers={'Content-Type': 'application/json'}
+    )
+
+    try:
+        res = request.urlopen(req)
+        data = json.loads(res.read().decode('utf8'))
+        size = int(data[0])
+        
+        print("\n*** Getting flow compliance consolidation")
+        print("FlowId: " + flowId)
+        print("Qtt of routes in history: " + size)
+        
+        for i in range(0, size):
+            req = request.Request(
+                ENDPOINT_URL + f"getFlowCompliance/{flowId}/{i}",
+                headers={'Content-Type': 'application/json'}
+            )
+
+            try:
+                res = request.urlopen(req)
+                data = json.loads(res.read().decode('utf8'))
+                print("RouteId: " + data[1])
+                print(f"Probe Success: {data[0]['success']}")
+                print(f"Probe Fail: {data[0]['fail']}")
+                print(f"Probe Null: {data[0]['nil']}\n\n")
+            except error.HTTPError as e:
+                if e.code == 500:
+                    print(f"Erro(routeId[{i}]): " + e.read().decode('utf-8'))
+
+    except error.HTTPError as e:
+        if e.code == 500:
+            print("\n*** Getting flow compliance consolidation " + flowId)
             print("Erro: " + e.read().decode('utf-8'))

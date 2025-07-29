@@ -3,7 +3,7 @@ from time import sleep
 from scapy.all import Packet
 
 from script.tester import linear_topology, Polka, PolkaProbe, integrity, start_sniffing
-from script.call_api import call_deploy_flow_contract, call_set_ref_sig, hash_flow_id, call_log_probe, call_get_flow_compliance
+from script.call_api import call_deploy_flow_contract, call_set_ref_sig, hash_flow_id, call_log_probe, call_get_flow_compliance, call_get_flow_compliance_consolidation, call_set_new_route 
 from .utils import calc_digests
 
 def integrity(net: Mininet):
@@ -12,7 +12,8 @@ def integrity(net: Mininet):
     """
 
     while(1):
-        action = input("\n*** Action[(1)-Send Probe|(2)-Flow Compliance|(3)-Exit]: ")
+        print("*** (1)-Send Probe\n(2)-Compliance\n(3)-Compliance Consolidation\n(4)-Change Route\n(5)-Exit]: ")
+        action = input("\n*** Action: ")
         print("\n\n")
         if action == "1":
             print("*** Sending Probe(s)")
@@ -35,7 +36,7 @@ def integrity(net: Mininet):
             first_host.cmd('ping -c ' + num_probes, last_host.IP())
             sleep(int(num_probes)*6)
             
-        elif action == "2":
+        elif action == "2" or action == "3" or action == "4":
             print("*** Chose the flow")
             first_host_name = input("First host: ")
             first_host = net.get(first_host_name)
@@ -47,11 +48,20 @@ def integrity(net: Mininet):
             
             print(f"{first_host}({first_host.IP()}) --> {last_host}({last_host.IP()})")
 
+            if action == "3":
+                call_get_flow_compliance_consolidation(hash_flow_id(first_host.IP(), "0", last_host.IP(), "0"))
+
+            elif action == "4":
+                call_set_new_route(hash_flow_id(first_host.IP(), "0", last_host.IP(), "0"), first_host_name, last_host_name)
+    
+
             call_get_flow_compliance(hash_flow_id(first_host.IP(), "0", last_host.IP(), "0"))
 
             sleep(2)
 
-        elif action == "3":
+
+
+        elif action == "5":
             break
 
 def connect_api():
