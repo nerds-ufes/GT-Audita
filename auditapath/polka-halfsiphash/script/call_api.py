@@ -33,7 +33,7 @@ def call_set_new_route(flowId, first_host, last_host):
     data_dct = {
         "flowId": str(flowId),
         "newRouteId": str(polka_route_ids[first_host][last_host]),
-        "newRdgeAddr": EDGE_NODE_ADDRESS
+        "newEdgeAddr": EDGE_NODE_ADDRESS
     }
 
     req = request.Request(
@@ -137,7 +137,6 @@ def call_get_flow_compliance(flowId):
             print("\n*** Getting compliance of flow " + flowId)
             print("Erro: " + e.read().decode('utf-8'))
 
-call_get_flow_compliance_consolidation
 def call_get_flow_compliance_consolidation(flowId):
     req = request.Request(
         ENDPOINT_URL + f"getFlowSizeRoutesHistory/{flowId}",
@@ -151,7 +150,7 @@ def call_get_flow_compliance_consolidation(flowId):
         
         print("\n*** Getting flow compliance consolidation")
         print("FlowId: " + flowId)
-        print("Qtt of routes in history: " + size)
+        print(f"Qtt of routes in history: {size}")
         
         for i in range(0, size):
             req = request.Request(

@@ -12,7 +12,7 @@ def integrity(net: Mininet):
     """
 
     while(1):
-        print("*** (1)-Send Probe\n(2)-Compliance\n(3)-Compliance Consolidation\n(4)-Change Route\n(5)-Exit]: ")
+        print("*** (1)-Send Probe\n*** (2)-Compliance\n*** (3)-Compliance Consolidation\n*** (4)-Change Route\n*** (5)-Exit")
         action = input("\n*** Action: ")
         print("\n\n")
         if action == "1":
@@ -54,8 +54,8 @@ def integrity(net: Mininet):
             elif action == "4":
                 call_set_new_route(hash_flow_id(first_host.IP(), "0", last_host.IP(), "0"), first_host_name, last_host_name)
     
-
-            call_get_flow_compliance(hash_flow_id(first_host.IP(), "0", last_host.IP(), "0"))
+            if action == "2" or action == "3":
+                call_get_flow_compliance(hash_flow_id(first_host.IP(), "0", last_host.IP(), "0"))
 
             sleep(2)
 
