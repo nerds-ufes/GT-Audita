@@ -138,6 +138,8 @@ def call_get_flow_compliance(flowId):
             print("Erro: " + e.read().decode('utf-8'))
 
 def call_get_flow_compliance_consolidation(flowId):
+    size = 0
+    
     req = request.Request(
         ENDPOINT_URL + f"getFlowSizeRoutesHistory/{flowId}",
         headers={'Content-Type': 'application/json'}
@@ -147,29 +149,30 @@ def call_get_flow_compliance_consolidation(flowId):
         res = request.urlopen(req)
         data = json.loads(res.read().decode('utf8'))
         size = int(data[0])
-        
-        print("\n*** Getting flow compliance consolidation")
-        print("FlowId: " + flowId)
-        print(f"Qtt of routes in history: {size}")
-        
-        for i in range(0, size):
-            req = request.Request(
-                ENDPOINT_URL + f"getFlowCompliance/{flowId}/{i}",
-                headers={'Content-Type': 'application/json'}
-            )
-
-            try:
-                res = request.urlopen(req)
-                data = json.loads(res.read().decode('utf8'))
-                print("RouteId: " + data[1])
-                print(f"Probe Success: {data[0]['success']}")
-                print(f"Probe Fail: {data[0]['fail']}")
-                print(f"Probe Null: {data[0]['nil']}\n\n")
-            except error.HTTPError as e:
-                if e.code == 500:
-                    print(f"Erro(routeId[{i}]): " + e.read().decode('utf-8'))
 
     except error.HTTPError as e:
         if e.code == 500:
-            print("\n*** Getting flow compliance consolidation " + flowId)
+            print("\n*** Getting history of flow " + flowId)
             print("Erro: " + e.read().decode('utf-8'))
+        
+    print("\n*** Getting flow compliance consolidation")
+    print("FlowId: " + flowId)
+    print("Qtt of routes in history: " + size)
+    
+    for i in range(0, size):
+        req = request.Request(
+            ENDPOINT_URL + f"/getFlowComplianceOfRouteHistoryIndex/{flowId}/{i}",
+            headers={'Content-Type': 'application/json'}
+        )
+
+        try:
+            res = request.urlopen(req)
+            data = json.loads(res.read().decode('utf8'))
+            print("RouteId: " + data[1])
+            print(f"Probe Success: {data[0]['success']}")
+            print(f"Probe Fail: {data[0]['fail']}")
+            print(f"Probe Null: {data[0]['nil']}\n\n")
+        
+        except error.HTTPError as e:
+            if e.code == 500:
+                print(f"Erro(routeId[{i}]): " + e.read().decode('utf-8'))
