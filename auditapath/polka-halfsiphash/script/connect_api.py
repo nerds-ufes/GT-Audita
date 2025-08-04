@@ -100,17 +100,22 @@ def connect_api():
             assert probe is not None, "❌ PolkaProbe layer not found"
             eth = pkt.getlayer("Ether")
             assert eth is not None, "❌ Ether layer not found"
+            icmp = pkt.getlayer("ICMP")
+            assert icmp is not None, "❌ ICMP layer not found"
 
-            if(probe.timestamp == probe.l_hash):
-                call_set_ref_sig(pkt)
-            else:
-                call_log_probe(pkt)
+            if (icmp.type == 8):
+                print(f"\nPacote capturado na interface: {pkt.sniffed_on}")
+                print(pkt.summary())
+                if(probe.timestamp == probe.l_hash):
+                    call_set_ref_sig(pkt)
+                else:
+                    call_log_probe(pkt)
 
             # print(f"{pkt.time} : {pkt.sniffed_on} - {eth.src} -> {eth.dst} => {probe.l_hash:#0{10}x}")
 
         
         call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
-        #call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
+        call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
 
         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
