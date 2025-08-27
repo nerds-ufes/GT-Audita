@@ -62,8 +62,8 @@ def sniff_cb(pkt: Packet):
     assert icmp is not None, "❌ ICMP layer not found"
 
     if (icmp.type == 8):
-        print(f"\nPacote capturado na interface: {pkt.sniffed_on}")
-        print(pkt.summary())
+        #print(f"\nPacote capturado na interface: {pkt.sniffed_on}")
+        #print(pkt.summary())
         if(probe.timestamp == probe.l_hash):
             call_set_ref_sig(pkt)
         else:
@@ -152,7 +152,7 @@ def integrity(net: Mininet):
     """
 
     while(1):
-        print("*** (1)-Send Probe\n*** (2)-Compliance\n*** (3)-Compliance Consolidation\n*** (4)-Change Route\n*** (5)-Exit")
+        print("\n*** (1)-Send Probe\n*** (2)-Compliance\n*** (3)-Compliance Consolidation\n*** (4)-Change Route\n*** (5)-Exit")
         action = input("\n*** Action: ")
         print("\n\n")
         if action == "1":
@@ -174,7 +174,7 @@ def integrity(net: Mininet):
             )
             
             first_host.cmd('ping -c ' + num_probes, last_host.IP())
-            sleep(int(num_probes)*6)
+            sleep(int(num_probes)*3)
             
         elif action == "2" or action == "3" or action == "4":
             print("*** Chose the flow")
