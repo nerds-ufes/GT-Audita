@@ -1,6 +1,6 @@
 from mn_wifi.net import info, Mininet
 from time import sleep
-from scapy.all import Packet
+from scapy.all import Packet#, get_if_addr
 
 from script.tester import linear_topology, Polka, PolkaProbe, integrity, start_sniffing
 from script.call_api import call_deploy_flow_contract, call_set_ref_sig, hash_flow_id, call_log_probe, call_get_flow_compliance, call_get_flow_compliance_consolidation, call_set_new_route 
@@ -12,7 +12,7 @@ def integrity(net: Mininet):
     """
 
     while(1):
-        print("*** (1)-Send Probe\n*** (2)-Compliance\n*** (3)-Compliance Consolidation\n*** (4)-Change Route\n*** (5)-Exit")
+        print("\n*** (1)-Send Probe\n*** (2)-Compliance\n*** (3)-Compliance Consolidation\n*** (4)-Change Route\n*** (5)-Exit")
         action = input("\n*** Action: ")
         print("\n\n")
         if action == "1":
@@ -33,8 +33,8 @@ def integrity(net: Mininet):
                 "    goes through all core switches.\n"
             )
             
-            first_host.cmd('ping -c ' + num_probes, last_host.IP())
-            sleep(int(num_probes)*6)
+            first_host.cmd('ping -c ' + num_probes, last_host.IP() + "&")
+            sleep(int(num_probes)*3)
             
         elif action == "2" or action == "3" or action == "4":
             print("*** Chose the flow")
@@ -104,8 +104,9 @@ def connect_api():
             assert icmp is not None, "❌ ICMP layer not found"
 
             if (icmp.type == 8):
-                print(f"\nPacote capturado na interface: {pkt.sniffed_on}")
-                print(pkt.summary())
+                #print(f"\nPacote capturado na interface: {pkt.sniffed_on}")
+                #print(f"IP da interface: {get_if_addr(pkt.sniffed_on)}")
+                #print(pkt.summary())
                 if(probe.timestamp == probe.l_hash):
                     call_set_ref_sig(pkt)
                 else:
