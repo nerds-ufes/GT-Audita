@@ -33,9 +33,9 @@ def run_network_tests():
     try:
         # tester.self()
         tester.addition()
-        tester.skipping()
-        tester.detour()
-        tester.outoforder()
+        #tester.skipping()
+        #tester.detour()
+        #tester.outoforder()
     except Exception as e:
         info(f"*** Test failed: {e}\n")
         raise e
@@ -44,10 +44,29 @@ def run_network_tests():
 
 if __name__ == "__main__":
     setLogLevel("info")
-    # run_network_tests()
-    # tester.collect_hashes()
+    #run_network_tests()
+    #tester.collect_hashes()
+    
+    #connect_api.connect_api()
+    while(1):
+        print("\n*** (1)-Default\n*** (2)-Addition\n*** (3)-Detour\n*** (4)-Skipping\n")
+        case = input("*** Case: ")
 
-    connect_api.connect_api()
+        if case == "1":
+            connect_api.connect_api()
+
+        elif case == "2":
+            tester.addition()
+
+        elif case == "3":
+            tester.detour()
+
+        elif case == "4":
+            tester.skipping()
+        
+        else:
+            break
+
     # connect_api.get_hashes_hops()
 
     # info("*** Running CLI\n")
