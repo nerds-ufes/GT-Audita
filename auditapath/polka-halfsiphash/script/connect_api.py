@@ -1,6 +1,6 @@
 from mn_wifi.net import info, Mininet
 from time import sleep
-from scapy.all import Packet#, get_if_addr
+from scapy.all import Packet
 
 from script.tester import linear_topology, Polka, PolkaProbe, integrity, start_sniffing
 from script.call_api import call_deploy_flow_contract, call_set_ref_sig, hash_flow_id, call_log_probe, call_get_flow_compliance, call_get_flow_compliance_consolidation, call_set_new_route 
@@ -58,8 +58,6 @@ def integrity(net: Mininet):
                 call_get_flow_compliance(hash_flow_id(first_host.IP(), "0", last_host.IP(), "0"))
 
             sleep(2)
-
-
 
         elif action == "5":
             break
