@@ -22,7 +22,6 @@ import script.tester as tester
 import script.connect_api as connect_api
 from script.topo import linear_topology
 
-
 def run_network_tests():
     """
     Run a battery of tests on the network.
@@ -47,26 +46,7 @@ if __name__ == "__main__":
     #run_network_tests()
     #tester.collect_hashes()
     
-    #connect_api.connect_api()
-    while(1):
-        print("\n*** (1)-Default\n*** (2)-Addition\n*** (3)-Detour\n*** (4)-Skipping\n")
-        case = input("*** Case: ")
-
-        if case == "1":
-            connect_api.connect_api()
-
-        elif case == "2":
-            tester.addition()
-
-        elif case == "3":
-            tester.detour()
-
-        elif case == "4":
-            tester.skipping()
-        
-        else:
-            break
-
+    connect_api.connect_api()
     # connect_api.get_hashes_hops()
 
     # info("*** Running CLI\n")
