@@ -54,10 +54,12 @@ def start_sniffing(net: Mininet, ifaces_fn = all_ifaces, cb: Optional[Callable[[
         iface=ifaces_fn(net),
         # filter=f"ether proto {POLKA_PROTO:#x}",
         filter="ether proto 0x1234",
-        store=True,
+        store=False,
         prn=cb,
     )
+
     sniffer.start()
+
     # Waits for the minimum amount for the sniffer to be setup and run
     while not hasattr(sniffer, "stop_cb"):
         sleep(0.06)
