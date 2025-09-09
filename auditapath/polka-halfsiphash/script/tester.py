@@ -330,8 +330,8 @@ def addition():
 
         # CLI(net)
 
-        call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
-        call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
+        #call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
+        #call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
 
         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
@@ -407,8 +407,8 @@ def detour():
 
         # CLI(net)
 
-        call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
-        call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
+        #call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
+        #call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
 
         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
@@ -530,8 +530,8 @@ def skipping():
 
         # CLI(net)
 
-        call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
-        call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
+        #call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
+        #call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
 
         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
