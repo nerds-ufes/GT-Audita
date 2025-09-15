@@ -174,7 +174,7 @@ def integrity(net: Mininet):
             )
             
             first_host.cmd('ping -c ' + num_probes, last_host.IP())
-            sleep(int(num_probes)*3)
+            sleep(int(num_probes)*15)
             
         elif action == "2" or action == "3" or action == "4":
             print("*** Chose the flow")
