@@ -305,7 +305,7 @@ def addition():
             cls=P4Switch,
         )
         info("*** Linking attacker\n")
-        # Taking the "default" port #3 which route from s4 -> s5 -> s6 should pass through on s5
+        # Taking the "default" port #3 which route from s5 -> s6 should pass through on s5
         link = net.addLink(compromised, attacker, port1=3, port2=0, bw=LINK_SPEED)
         info(f"*** Created link {link}\n")
         link = net.addLink(attacker, next_sw, port1=1, port2=2, bw=LINK_SPEED)
@@ -386,15 +386,15 @@ def detour():
             cls=P4Switch,
         )
         info("*** Linking attacker\n")
-        # Taking the "default" port #3 which route from s4 -> s5 -> s6 should pass through on s5
+        # Taking the "default" port #3 which route from s5 -> s6 -> s7 should pass through on s6
         link = net.addLink(prev_sw, attacker, port1=3, port2=0, bw=LINK_SPEED)
         info(f"*** Created link {link}\n")
-        link = net.addLink(attacker, next_sw, port1=1, port2=2, bw=LINK_SPEED)
+        link = net.addLink(attacker, next_sw, port1=1, port2=4, bw=LINK_SPEED)
         info(f"*** Created link {link}\n")
         # relink skipped sw
         link = net.addLink(prev_sw, skipped, port1=4, port2=2, bw=LINK_SPEED)
         info(f"*** Created link {link}\n")
-        link = net.addLink(skipped, next_sw, port1=3, port2=4, bw=LINK_SPEED)
+        link = net.addLink(skipped, next_sw, port1=4, port2=2, bw=LINK_SPEED)
 
         # net = set_seed_e1(net, 0xBADDC0DE)
         # net = set_seed_e10(net, 0xDEADBEEF)
