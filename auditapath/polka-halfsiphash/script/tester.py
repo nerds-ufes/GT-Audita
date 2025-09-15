@@ -425,68 +425,68 @@ def detour():
     finally:
         net.stop()
 
-# def outoforder():
-#     """
-#     Test if the network is protected against an outoforder attack.
+def outoforder():
+    """
+    Test if the network is protected against an outoforder attack.
 
-#     An outoforder attack is when the route is acessed using all defined router,
-#      and no other routers, but their order differ.
-#     """
-#     info("*** OUTOFORDER TEST ***\n")
-#     net = linear_topology(start=False)
-#     try:
-#         # Switch ports
-#         # Generally, on core POV:
-#         # eth0 = lo?
-#         # eth1 = edge
-#         # eth2 = previous
-#         # eth3 = next
-#         oor = net.switches[3:7]
-#         info("*** Replacing links with compromised route\n")
+    An outoforder attack is when the route is acessed using all defined router,
+     and no other routers, but their order differ.
+    """
+    info("*** OUTOFORDER TEST ***\n")
+    net = linear_topology(start=False)
+    try:
+        # Switch ports
+        # Generally, on core POV:
+        # eth0 = lo?
+        # eth1 = edge
+        # eth2 = previous
+        # eth3 = next
+        oor = net.switches[3:7]
+        info("*** Replacing links with compromised route\n")
 
-#         for i in range(3):
-#             links = net.delLinkBetween(oor[i], oor[i + 1], allLinks=True)
-#             assert len(links) == 1, (
-#                 f"❌ Expected 1 link to be removed between {oor[i].name} and {oor[i + 1].name}"
-#             )
+        for i in range(3):
+            links = net.delLinkBetween(oor[i], oor[i + 1], allLinks=True)
+            assert len(links) == 1, (
+                f"❌ Expected 1 link to be removed between {oor[i].name} and {oor[i + 1].name}"
+            )
 
-#         info("*** Linking back\n")
-#         # Taking the "default" port #3 which route from s4 -> s5 -> s6 should pass through on s5
-#         link = net.addLink(oor[0], oor[2], port1=3, port2=2, bw=LINK_SPEED)
-#         info(f"*** Created link {link}\n")
-#         link = net.addLink(oor[2], oor[1], port1=3, port2=2, bw=LINK_SPEED)
-#         info(f"*** Created link {link}\n")
-#         link = net.addLink(oor[1], oor[3], port1=3, port2=2, bw=LINK_SPEED)
-#         info(f"*** Created link {link}\n")
+        info("*** Linking back\n")
+        # Taking the "default" port #3 which route from s4 -> s5 -> s6 should pass through on s5
+        link = net.addLink(oor[0], oor[2], port1=3, port2=2, bw=LINK_SPEED)
+        info(f"*** Created link {link}\n")
+        link = net.addLink(oor[2], oor[1], port1=3, port2=2, bw=LINK_SPEED)
+        info(f"*** Created link {link}\n")
+        link = net.addLink(oor[1], oor[3], port1=3, port2=2, bw=LINK_SPEED)
+        info(f"*** Created link {link}\n")
 
-#         # net = set_seed_e1(net, 0xABADCAFE)
-#         # net = set_seed_e10(net, 0xBADDC0DE)
+        # net = set_seed_e1(net, 0xABADCAFE)
+        # net = set_seed_e10(net, 0xBADDC0DE)
 
-#         net.start()
-#         net.staticArp()
+        net.start()
+        net.staticArp()
 
-#         # sleep for a bit to let the network stabilize
-#         sleep(3)
+        # sleep for a bit to let the network stabilize
+        sleep(3)
 
-#         # CLI(net)
+        # CLI(net)
 
-#         call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
-#         call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
+        call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
+        call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
 
-#         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
+        sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
-#         integrity(net)
+        integrity(net)
 
-#         # Time to finish printing the logs
-#         sleep(2)
+        # Time to finish printing the logs
+        sleep(2)
 
-#         info("*** Stopping sniffing\n")
-#         sniff.stop()
+        info("*** Stopping sniffing\n")
+        sniff.stop()
 
-#         info("*** OUT OF ORDER TEST DONE ***\n")
+        info("*** OUT OF ORDER TEST DONE ***\n")
 
-#     finally:
-#         net.stop()
+    finally:
+        net.stop()
 
 def skipping():
     """
