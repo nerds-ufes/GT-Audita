@@ -16,41 +16,33 @@
 
 # https://mininet.org/api/hierarchy.html
 from mininet.log import setLogLevel, info, debug
-from mn_wifi.cli import CLI  # type: ignore assumes import exists, it's from p4-utils
 
 import script.tester as tester
-import script.connect_api as connect_api
-from script.topo import linear_topology
-
-def run_network_tests():
-    """
-    Run a battery of tests on the network.
-    The tests are specific to this topology and are hardcoded to test the specific topology.
-    """
-
-    info("*** Auto-testing network\n")
-    try:
-        # tester.self()
-        tester.addition()
-        #tester.skipping()
-        #tester.detour()
-        #tester.outoforder()
-    except Exception as e:
-        info(f"*** Test failed: {e}\n")
-        raise e
-    info("*** ✅ All tests passed.\n")
-
 
 if __name__ == "__main__":
     setLogLevel("info")
-    #run_network_tests()
-    #tester.collect_hashes()
-    
-    connect_api.connect_api()
-    # connect_api.get_hashes_hops()
+    tester.default()
 
-    # info("*** Running CLI\n")
-    # net = linear_topology()
-    # CLI(net)
-    # info("*** Stopping network\n")
-    # net.stop()
+    print("\n*** (1)-Default\n*** (2)-Addition\n*** (3)-Partial Detour\n*** (4)-Complete Detour\n*** (5)-Skipping\n*** (6)-Out of Order\n")
+    case = input("*** Case: ")
+
+    if case == "1":
+        tester.default()
+
+    elif case == "2":
+        tester.addition()
+
+    elif case == "3":
+        tester.partial_detour()
+
+    elif case == "4":
+        tester.complete_detour()
+    
+    elif case == "5":
+        tester.skipping()
+
+    elif case == "6":
+        tester.outoforder()
+
+    else:
+        print("Invalid case!\n")
