@@ -13,7 +13,7 @@ from mn_wifi.bmv2 import (  # type: ignore assumes import exists, it's from p4-u
     P4Switch,
 )
 from mn_wifi.net import info, Mininet
-from scapy.all import Packet#, PacketList
+from scapy.all import Packet
 
 from .scapy import Polka, PolkaProbe, start_sniffing
 # from .thrift import set_crc_parameters_common
@@ -23,6 +23,7 @@ from .topo import (
     # all_ifaces,
     # connect_to_core_switch,
     linear_topology,
+    simple_topology,
     polka_json_path,
     # set_seed_e1,
     # set_seed_e10,
@@ -68,83 +69,6 @@ def sniff_cb(pkt: Packet):
             call_set_ref_sig(pkt)
         else:
             call_log_probe(pkt)
-
-# def check_digest(pkts: PacketList, seed_src: int, seed_dst: int):
-#     """
-#     Check if the packets have the expected digests
-#     """
-#     # for pkt in pkts:
-#     #     print(f"{pkt.getlayer(PolkaProbe).l_hash:#0{10}x}, {pkt.getlayer(PolkaProbe).timestamp:#0{10}x}")
-
-#     src_routeid = pkts[0].getlayer(Polka).route_id
-#     print(f"src_routeid: {src_routeid:#08x}")
-#     dst_routeid = pkts[len(pkts) // 2].getlayer(Polka).route_id
-#     print(f"dst_routeid (reply): {dst_routeid:#08x}")
-
-#     going = calc_digests(src_routeid, "s1", seed_src)
-#     reply = calc_digests(dst_routeid, "s10", seed_dst)
-
-#     def dup(it: Iterable[T]) -> Iterable[T]:
-#         """Every row is duplicated because the capture captures the packet twice, once for each monitored port"""
-#         for p in it:
-#             for _ in range(2):
-#                 yield p
-
-#     going = list(dup(going))
-#     reply = list(dup(reply))
-
-#     routes: list[list[Packet]] = []
-#     marker_flag = False
-#     for pkt in pkts:
-#         polka_layer = pkt.getlayer(PolkaProbe)
-#         assert polka_layer is not None, "❌ PolkaProbe layer not found"
-#         if polka_layer.l_hash in (seed_src, seed_dst):
-#             marker_flag = not marker_flag
-#         if marker_flag:
-#             routes.append([pkt])
-#         else:
-#             routes[-1].append(pkt)
-#     assert len(routes) == 4, (
-#         f"❌ Expected 4 routes (send, reply, send back, reply back). Got {len(routes)}"
-#     )
-
-#     # Using Python3.8, so can't use `zip(*iterables, strict=True)`
-
-#     info("*** Checking collected packets\n")
-#     for route, expected_digests in zip(routes, (going, reply, reply, going)):
-#         info("*** 🔍 Tracing new route\n")
-#         for pkt, expected_digest in zip(route, expected_digests):
-#             polka = pkt.getlayer(Polka)
-#             assert polka is not None, "❌ Polka layer not found"
-#             probe = pkt.getlayer(PolkaProbe)
-#             assert probe is not None, "❌ Polka probe layer not found"
-#             l_hash = probe.l_hash
-#             info(
-#                 f"*** Comparing {l_hash:#08x}, expects 0x{expected_digest.hex()} "
-#                 f"on node {polka.ttl:#04x}:{pkt.sniffed_on} "
-#             )
-#             if l_hash == int.from_bytes(expected_digest, byteorder="big"):
-#                 info("✅ ok\n")
-#             else:
-#                 info("❌ Digest does not match\n")
-
-#         if len(route) != len(expected_digests):
-#             info(
-#                 f"*** ❌ Route length does not match expected. Expected {len(expected_digests)}, got {len(route)}\n"
-#             )
-#             if len(route) < len(expected_digests):
-#                 for digest in expected_digests[len(route) :]:
-#                     info(f"*** Missing digest 0x{digest.hex()}\n")
-#             else:
-#                 info("*** ❌ Leftover packets:\n")
-#                 for pkt in route[len(expected_digests) :]:
-#                     polka = pkt.getlayer(Polka)
-#                     assert polka is not None, "❌ Polka layer not found"
-#                     probe = pkt.getlayer(PolkaProbe)
-#                     assert probe is not None, "❌ Polka probe layer not found"
-#                     info(
-#                         f"*** {probe.l_hash:#08x} on node {polka.ttl:#04x}:{pkt.sniffed_on}\n"
-#                     )
 
 def integrity(net: Mininet):
     """
@@ -204,70 +128,40 @@ def integrity(net: Mininet):
         elif action == "5":
             break
 
-# def self():
-#     """
-#     The self-test's purpose is to test if we can run the network
-#     and if the network is working as expected.
-#     It also tests if our tooling is working as expected.
-#     """
-#     net = linear_topology()
-#     try:
-#         # sleep for a bit to let the network stabilize
-#         sleep(3)
+def default():
+    """
+    Collect the hashes (all intermediary) from the network
+    """
 
-#         info("*** SELF TEST ***\n")
-#         integrity(net)
+    info("*** Starting run for collecting hash and intermediaries\n")
 
-#         info("*** Breaking the polka routing on s3\n")
+    net = linear_topology(start=False)
+    try:
+        net.start()
+        net.staticArp()
 
-#         # print(f"{net.ipBase=}")
-#         # print(f"{net.host=}")
-#         s3 = connect_to_core_switch(3)
-#         # Changes SwitchID from `0x0039` to `0x0000`
-#         set_crc_parameters_common(s3, "calc 0x0000 0x0 0x0 false false")
+        # sleep for a bit to let the network stabilize
+        sleep(3)
+        
+        call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
+        call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
 
-#         try:
-#             integrity(net)
-#         except AssertionError:
-#             info("*** Test failed as expected\n")
-#         else:
-#             raise AssertionError("SelfTest error: Test should have failed")
+        sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
-#         info("*** Restoring the polka routing on s3\n")
-#         set_crc_parameters_common(s3, "calc 0x0039 0x0 0x0 false false")
+        integrity(net)
 
-#         integrity(net)
-#         net.stop()
+        # Time to finish printing the logs
+        sleep(2)  
 
-#         net = linear_topology(start=False)
-#         # sleep for a bit to let the network stabilize
+        info("\n*** Stopping sniffing\n")
+        sniff.stop()
 
-#         info("*** Testing the baseline signatures\n")
+        info("*** Hashes collected ***\n")
 
-#         net = set_seed_e1(net, 0x61E8D6E7)
-#         net = set_seed_e10(net, 0xDEADBEEF)
+    finally:
+        net.stop()
 
-#         net.start()
-#         net.staticArp()
-
-#         sleep(3)
-#         assert len(all_ifaces(net)) == 49, (
-#             f"❌ Expected 49 interfaces. Got {len(all_ifaces(net))}"
-#         )
-#         sniff = start_sniffing(net)
-#         info("Sniffer is setup.")
-#         integrity(net)
-#         info("*** Stopping sniffing\n")
-#         sleep(0.5)
-#         pkts = sniff.stop()
-#         assert pkts, "❌ No packets captured"
-#         pkts.sort(key=lambda pkt: pkt.time)
-
-#         check_digest(pkts, 0x61E8D6E7, 0xDEADBEEF)
-
-#         info("*** SELF TEST DONE ***\n")
-#     finally:
-#         net.stop()
+    info("*** ✅ Run finished.\n")
 
 def addition():
     """
@@ -348,14 +242,14 @@ def addition():
     finally:
         net.stop()
 
-def detour():
+def partial_detour():
     """
     Test if the network is protected against a detour attack.
 
     A detour attack is when a new switch is added to the network between two existing switches,
     concurring with an existing switch, with the same connections as the existing switch.
     """
-    info("*** DETOUR TEST ***\n")
+    info("*** PARTIAL DETOUR TEST ***\n")
     net = linear_topology(start=False)
     try:
         # Switch ports
@@ -420,7 +314,85 @@ def detour():
         info("*** Stopping sniffing\n")
         sniff.stop()
 
-        info("*** DETOUR TEST DONE ***\n")
+        info("*** PARTIAL DETOUR TEST DONE ***\n")
+
+    finally:
+        net.stop()
+
+def complete_detour():
+    """
+    Test if the network is protected against a detour attack.
+
+    A detour attack is when a new switch is added to the network between two existing switches,
+    concurring with an existing switch, with the same connections as the existing switch.
+    """
+    info("*** COMPLETE DETOUR TEST ***\n")
+    net = linear_topology(start=False)
+    try:
+        # Switch ports
+        # Generally, on core POV:
+        # eth0 = lo?
+        # eth1 = edge
+        # eth2 = previous
+        # eth3 = next
+        start_sw = net.switches[0]
+        next_start_sw = net.switches[1]
+        prev_last_sw = net.switches[8]
+        last_sw = net.switches[9]
+        info(f"*** Replacing {start_sw}'s links with compromised route\n")
+
+        links = net.delLinkBetween(start_sw, next_start_sw, allLinks=True)
+        assert len(links) == 1, (
+            f"❌ Expected 1 link to be removed between {start_sw.name} and {next_start_sw.name}"
+        )
+        links = net.delLinkBetween(last_sw, prev_last_sw, allLinks=True)
+        assert len(links) == 1, (
+            f"❌ Expected 1 link to be removed between {prev_last_sw.name} and {last_sw.name}"
+        )
+
+        aux_sw = start_sw
+        info("*** Adding attackers\n")
+        for i in range(2, 10):
+            attacker = net.addSwitch(
+                f"s{i}{i}{i}",
+                netcfg=True,
+                json=Path.join(polka_json_path, "polka-attacker.json"),
+                thriftport=CORE_THRIFT_CORE_OFFSET + i + i*10 + i*100,
+                loglevel="debug",
+                cls=P4Switch,
+            )
+            info("*** Linking attacker\n")
+            
+            if aux_sw:
+                link = net.addLink(aux_sw, attacker, port1=3, port2=2, bw=LINK_SPEED)
+                info(f"*** Created link {link}\n")
+            aux_sw = attacker
+        
+        link = net.addLink(aux_sw, last_sw, port1=3, port2=2, bw=LINK_SPEED)
+        info(f"*** Created link {link}\n")
+
+        net.start()
+        net.staticArp()
+
+        # sleep for a bit to let the network stabilize
+        sleep(3)
+
+        # CLI(net)
+
+        #call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
+        #call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
+
+        sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
+
+        integrity(net)
+
+        # Time to finish printing the logs
+        sleep(2)
+
+        info("*** Stopping sniffing\n")
+        sniff.stop()
+
+        info("*** COMPLETE DETOUR TEST DONE ***\n")
 
     finally:
         net.stop()
@@ -548,74 +520,39 @@ def skipping():
     finally:
         net.stop()
 
-# def send_pkt(pkt):
-#     ENDPOINT_URL = "http://localhost:8283/"
+def yuri():
+    info("*** YURI TEST ***\n")
+    net =  simple_topology(start=False)
+    try:
+        # Switch ports
+        # Generally, on core POV:
+        # eth0 = lo?
+        # eth1 = edge
+        # eth2 = previous
+        # eth3 = next
 
-#     # Read headers
-#     polka_pkt = pkt.getlayer(Polka)
-#     assert polka_pkt is not None, "❌ Polka layer not found"
+        net.start()
+        net.staticArp()
 
-#     probe_pkt = pkt.getlayer(PolkaProbe)
+        # sleep for a bit to let the network stabilize
+        sleep(3)
 
-#     req = request.Request(
-#         ENDPOINT_URL,
-#         data=json.dumps(
-#             {"route_id": polka_pkt.route_id, "probe": probe_pkt.to_dict()}
-#         ).encode("utf-8"),
-#     )
-#     res = request.urlopen(req)
-#     print(res.read().decode("utf-8"))
+        # CLI(net)
 
-# def collect_hashes():
-#     """
-#     Collect the hashes (all intermediary) from the network
-#     """
+        call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.3.3", "0"))
+        #call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
 
-#     info("*** Starting run for collecting hash and intermediaries\n")
+        sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
-#     net = linear_topology(start=False)
-#     try:
-#         net.start()
-#         net.staticArp()
+        integrity(net)
 
-#         # sleep for a bit to let the network stabilize
-#         sleep(3)
+        # Time to finish printing the logs
+        sleep(2)
 
-#         def ifaces_fn(net: Mininet):
-#             import re
-#             iname = re.compile(r"e\d+-eth2")
-            
-#             return [
-#                 iface
-#                 for switch in net.switches
-#                 for iface in switch.intfNames()
-#                 if iname.match(iface)
-#             ]
+        info("*** Stopping sniffing\n")
+        sniff.stop()
 
-#         def sniff_cb(pkt: Packet):
-#             assert pkt.sniffed_on is not None, (
-#                 "❌ Packet not sniffed on any interface. WTF."
-#             )
-#             polka = pkt.getlayer(Polka)
-#             assert polka is not None, "❌ Polka layer not found"
-#             probe = pkt.getlayer(PolkaProbe)
-#             assert probe is not None, "❌ PolkaProbe layer not found"
-#             eth = pkt.getlayer("Ether")
-#             assert eth is not None, "❌ Ether layer not found"
+        info("*** YURI TEST DONE ***\n")
 
-#             send_pkt(pkt)
-#             return f"{pkt.sniffed_on} - {eth.src} -> {eth.dst} : => {probe.l_hash:#0{10}x}"
-
-#         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
-
-#         integrity(net)
-
-#         info("*** Stopping sniffing\n")
-#         sniff.stop()
-
-#         info("*** Hashes collected ***\n")
-
-#     finally:
-#         net.stop()
-
-#     info("*** ✅ Run finished.\n")
+    finally:
+        net.stop()
