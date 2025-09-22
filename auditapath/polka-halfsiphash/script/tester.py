@@ -350,9 +350,20 @@ def complete_detour():
             f"❌ Expected 1 link to be removed between {prev_last_sw.name} and {last_sw.name}"
         )
 
-        aux_sw = start_sw
         info("*** Adding attackers\n")
-        for i in range(2, 10):
+        s222_sw = net.addSwitch(
+            "s222",
+            netcfg=True,
+            json=Path.join(polka_json_path, "polka-attacker.json"),
+            thriftport=CORE_THRIFT_CORE_OFFSET + 222,
+            loglevel="debug",
+            cls=P4Switch,
+        )
+        link = net.addLink(start_sw, s222_sw, port1=2, port2=0, bw=LINK_SPEED)
+        info(f"*** Created link {link}\n")
+        aux_sw = s222_sw
+
+        for i in range(3, 10):
             attacker = net.addSwitch(
                 f"s{i}{i}{i}",
                 netcfg=True,
@@ -364,11 +375,11 @@ def complete_detour():
             info("*** Linking attacker\n")
             
             if aux_sw:
-                link = net.addLink(aux_sw, attacker, port1=3, port2=2, bw=LINK_SPEED)
+                link = net.addLink(aux_sw, attacker, port1=1, port2=0, bw=LINK_SPEED)
                 info(f"*** Created link {link}\n")
             aux_sw = attacker
         
-        link = net.addLink(aux_sw, last_sw, port1=3, port2=2, bw=LINK_SPEED)
+        link = net.addLink(aux_sw, last_sw, port1=1, port2=2, bw=LINK_SPEED)
         info(f"*** Created link {link}\n")
 
         net.start()
