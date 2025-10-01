@@ -19,7 +19,7 @@ CORE_THRIFT_CORE_OFFSET = 50000
 EDGE_THRIFT_CORE_OFFSET = 50100
 
 polka_json_path = Path.join(Path.split(Path.split(__file__)[0])[0], "polka")
-polka_config_path = Path.join(polka_json_path, "config")
+polka_config_path = Path.join(polka_json_path, "config_simple")
 
 
 def _simple_topology_add_hosts(net: Mininet):
@@ -43,7 +43,7 @@ def _simple_topology_add_switches(net: Mininet):
     edges = []
     cores = []
 
-    info("*** OLA Adding P4Switches (core)\n")
+    info("*** Adding P4Switches (core)\n")
     for i in range(1, N_SWITCHES + 1):
         # read the network configuration
         # Add P4 switches (core)
@@ -92,7 +92,7 @@ def simple_topology(start=True) -> Mininet:
         net, hosts = _simple_topology_add_hosts(net)
         net, cores, edges = _simple_topology_add_switches(net)
 
-        info("*** AQUI  Creating links\n")
+        info("*** Creating links\n")
         for i in range(0, 2):
             net.addLink(hosts[i], edges[i], bw=LINK_SPEED)
         
