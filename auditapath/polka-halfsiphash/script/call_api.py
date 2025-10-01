@@ -7,12 +7,12 @@ from script.utils import calc_digests, polka_route_ids, get_ingress_edge, calc_f
 ENDPOINT_URL = "http://localhost:5000/"
 EDGE_NODE_ADDRESS = "0xf17f52151EbEF6C7334FAD080c5704D77216b732"
 
-def call_deploy_flow_contract(flowId, first_host="h1", last_host="h10"):
+def call_deploy_flow_contract(flowId, routeId):
     print(f"\n*** Deploying the contract related to the flowId {flowId}")
 
     data_dct = {
         "flowId": str(flowId),
-        "routeId": str(polka_route_ids[first_host][last_host]),
+        "routeId": str(routeId),
         "edgeAddr": EDGE_NODE_ADDRESS
     }
 
@@ -27,12 +27,12 @@ def call_deploy_flow_contract(flowId, first_host="h1", last_host="h10"):
         print("Successfully deployed!")
         print("Transaction hash: " + res.read().decode('utf-8').strip(), end="\n\n")
 
-def call_set_new_route(flowId, first_host, last_host):
+def call_set_new_route(flowId, routeId):
     print(f"\n*** Setting new route to the flowId {flowId}")
 
     data_dct = {
         "flowId": str(flowId),
-        "newRouteId": str(polka_route_ids[first_host][last_host]),
+        "newRouteId": str(routeId),
         "newEdgeAddr": EDGE_NODE_ADDRESS
     }
 

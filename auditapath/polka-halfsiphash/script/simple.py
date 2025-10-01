@@ -43,7 +43,7 @@ def _simple_topology_add_switches(net: Mininet):
     edges = []
     cores = []
 
-    info("*** Adding P4Switches (core)\n")
+    info("*** OLA Adding P4Switches (core)\n")
     for i in range(1, N_SWITCHES + 1):
         # read the network configuration
         # Add P4 switches (core)
@@ -92,7 +92,7 @@ def simple_topology(start=True) -> Mininet:
         net, hosts = _simple_topology_add_hosts(net)
         net, cores, edges = _simple_topology_add_switches(net)
 
-        info("*** Creating links\n")
+        info("*** AQUI  Creating links\n")
         for i in range(0, 2):
             net.addLink(hosts[i], edges[i], bw=LINK_SPEED)
         
@@ -104,11 +104,16 @@ def simple_topology(start=True) -> Mininet:
         s3 = cores[2]
         s4 = cores[3]
 
-        net.addLink(s1, s2, port1=1, port2=, bw=LINK_SPEED)
-        net.addLink(s1, s3, port1=2, port2=, bw=LINK_SPEED)
-        net.addLink(s2, s3, port1=2, port2=, bw=LINK_SPEED)
-        net.addLink(s2, s4, port1=3, port2=, bw=LINK_SPEED)
-        net.addLink(s3, s4, port1=3, port2=, bw=LINK_SPEED)
+        # Path-1 (s1 -> s2 -> s4)
+        net.addLink(s1, s2, bw=LINK_SPEED)
+        net.addLink(s2, s4, bw=LINK_SPEED)
+
+        # Path-2 (s1 -> s3 -> s4)
+        net.addLink(s1, s3, bw=LINK_SPEED)
+        net.addLink(s3, s4, bw=LINK_SPEED)
+
+        # Path-3 (s1 -> s2 -> s3 -> s4)
+        net.addLink(s2, s3, bw=LINK_SPEED)
 
         if start:
             info("*** Starting network\n")
@@ -244,45 +249,3 @@ def all_ifaces(net: Mininet):
         for iface in switch.intfNames()
         if iface != "lo"
     ]
-
-def simple_topology(start=True) -> Mininet:
-    "Create a network."
-    net = Mininet()
-    try:
-        # linkopts = dict()
-        net, hosts = _simple_topology_add_hosts(net)
-        net, cores, edges = _simple_topology_add_switches(net)
-
-        info("*** Creating links\n")
-        for i in range(0, N_SWITCHES):
-            net.addLink(hosts[i], edges[i], bw=LINK_SPEED)
-            net.addLink(edges[i], cores[i], bw=LINK_SPEED)
-
-        last_switch = None
-
-        for i in range(0, N_SWITCHES - 1):
-            switch = cores[i]
-
-            if last_switch:
-                net.addLink(last_switch, switch, bw=LINK_SPEED)
-            last_switch = switch
-
-        net.addLink(cores[0], cores[3], bw=LINK_SPEED)
-        net.addLink(cores[3], cores[2], bw=LINK_SPEED)
-
-        # host 11
-        net.addLink(hosts[-1], edges[0], bw=LINK_SPEED)
-
-        if start:
-            info("*** Starting network\n")
-            net.start()
-            net.staticArp()
-
-        # disabling offload for rx and tx on each host interface
-        for host in hosts:
-            host.cmd(f"ethtool --offload {host.name}-eth0 rx off tx off")
-
-        return net
-    except Exception as e:
-        net.stop()
-        raise e

@@ -72,7 +72,7 @@ def sniff_cb(pkt: Packet):
 
 def integrity(net: Mininet):
     """
-    Test the integrity of the network, this is to be used in a suite of tests
+    Test the integrity of the network, this is to be used in a suite of testsdicionando um novo host e um link para o switch s1 dinamicamentei
     """
 
     while(1):
@@ -81,49 +81,48 @@ def integrity(net: Mininet):
         print("\n\n")
         if action == "1":
             print("*** Sending Probe(s)")
-            first_host_name = input("First host: ") 
-            first_host = net.get(first_host_name)
-            assert first_host is not None, "Host " + first_host_name + " not found"
+            src_host_name = input("SRC host: ") 
+            src_host = net.get(src_host_name)
+            assert src_host is not None, "Host " + src_host_name + " not found"
          
-            last_host_name = input("Last host: ")
-            last_host = net.get(last_host_name)  # h11 is right beside h1, so wouldn't traverse all switches
-            assert last_host is not None, "Host " + last_host_name + " not found"
+            dst_host_name = input("DST host: ")
+            dst_host = net.get(dst_host_name)  # h11 is right beside h1, so wouldn't traverse all switches
+            assert dst_host is not None, "Host " + dst_host_name + " not found"
             
             num_probes = input("Number of probes: ")
 
             info(
                 "\n*** Testing network integrity\n"
-                f"    a ping from {first_host.name} to {last_host.name},\n"
+                f"    a ping from {src_host.name} to {dst_host.name},\n"
                 "    goes through all core switches.\n"
             )
             
-            first_host.cmd('ping -c ' + num_probes, last_host.IP())
+            src_host.cmd('ping -c ' + num_probes, dst_host.IP())
             sleep(int(num_probes)*15)
             
         elif action == "2" or action == "3" or action == "4":
             print("*** Chose the flow")
-            first_host_name = input("First host: ")
-            first_host = net.get(first_host_name)
-            assert first_host is not None, "Host " + first_host_name + " not found"
+            src_host_name = input("SRC host: ")
+            src_host = net.get(src_host_name)
+            assert src_host is not None, "Host " + src_host_name + " not found"
 
-            last_host_name = input("Last host: ")
-            last_host = net.get(last_host_name)  # h11 is right beside h1, so wouldn't traverse all switches
-            assert last_host is not None, "Host " + last_host_name + " not found"
+            dst_host_name = input("DST host: ")
+            dst_host = net.get(dst_host_name)  # h11 is right beside h1, so wouldn't traverse all switches
+            assert dst_host is not None, "Host " + dst_host_name + " not found"
             
-            print(f"{first_host}({first_host.IP()}) --> {last_host}({last_host.IP()})")
+            print(f"{src_host}({src_host.IP()}) --> {dst_host}({dst_host.IP()})")
 
             if action == "3":
-                call_get_flow_compliance_consolidation(hash_flow_id(first_host.IP(), "0", last_host.IP(), "0"))
+                call_get_flow_compliance_consolidation(hash_flow_id(src_host.IP(), "0", dst_host.IP(), "0"))
 
             elif action == "4":
-                call_set_new_route(hash_flow_id(first_host.IP(), "0", last_host.IP(), "0"), first_host_name, last_host_name)
+                routeId = input("New routeId: ")
+                call_set_new_route(hash_flow_id(src_host.IP(), "0", dst_host.IP(), "0"), routeId)
     
             if action == "2" or action == "3":
-                call_get_flow_compliance(hash_flow_id(first_host.IP(), "0", last_host.IP(), "0"))
+                call_get_flow_compliance(hash_flow_id(src_host.IP(), "0", dst_host.IP(), "0"))
 
             sleep(2)
-
-
 
         elif action == "5":
             break
@@ -531,16 +530,23 @@ def skipping():
     finally:
         net.stop()
 
-def yuri():
-    info("*** YURI TEST ***\n")
-    net =  simple_topology(start=False)
+def simple():
+    PATH1_H1_H4 = 89931881502587 
+    PATH1_H4_H1 = 89931881502584
+
+    PATH2_H1_H4 = 166807723460375
+    PATH2_H4_H1 = 42207349362690
+
+    PATH3_H1_H4 = 18205742658938488364
+    PATH3_H4_H1 = 2908909522564514583
+
+    info("*** SIMPLE TEST ***\n")
+    net = simple_topology(start=False)
     try:
         # Switch ports
         # Generally, on core POV:
         # eth0 = lo?
         # eth1 = edge
-        # eth2 = previous
-        # eth3 = next
 
         net.start()
         net.staticArp()
@@ -550,8 +556,8 @@ def yuri():
 
         # CLI(net)
 
-        call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.3.3", "0"))
-        #call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
+        call_deploy_flow_contract(flowId=hash_flow_id("10.0.1.1", "0", "10.0.4.4", "0"), routeId=PATH1_H1_H4)
+        call_deploy_flow_contract(flowId=hash_flow_id("10.0.4.4", "0", "10.0.1.1", "0"), routeId=PATH1_H4_H1)
 
         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
@@ -563,7 +569,7 @@ def yuri():
         info("*** Stopping sniffing\n")
         sniff.stop()
 
-        info("*** YURI TEST DONE ***\n")
+        info("*** SIMPLE TEST DONE ***\n")
 
     finally:
         net.stop()

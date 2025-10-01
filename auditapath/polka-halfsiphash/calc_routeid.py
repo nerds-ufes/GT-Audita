@@ -33,27 +33,38 @@ def _main():
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1],  # s9
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1],  # s10
     ]
-    print("From h1 to h3 ====")
-    # defining the nodes from h1 to h3
-    nodes = [s[0], s[1], s[2]]
-    # defining the transmission state for each node from h1 to h3
+    print("From h1 to h4 ====")
+    # defining the nodes from h1 to h4
+    nodes = [
+            s[0],   # s1
+            s[1],   # s2
+            s[2],   # s3
+            s[3]    # s4
+    ]
+    # defining the transmission state for each node from h1 to h4
     o = [
-        [1, 0],  # s1
-        [1, 0, 0],  # s2
-        [1],  # s3
+        [1, 0],     # s1
+        [1, 1],     # s2
+        [1, 0],     # s3
+        [1],        # s4
     ]
     print_poly(calculate_routeid(nodes, o, debug=DEBUG))
 
-    print("From h3 to h1 ====")
-    # defining the nodes from h1 to h3
-    nodes = [s[2], s[1], s[0]]
-    # defining the transmission state for each node from h1 to h3
-    o = [
-        [1, 0],  # s3
-        [1, 0],  # s2
-        [1],  # s1
+    print("From h4 to h1 ====")
+    # defining the nodes from h4 to h1
+    nodes = [
+            s[3],   # s4
+            s[2],   # s3
+            s[1],   # s2
+            s[0]    # s1
     ]
-
+    # defining the transmission state for each node from h4 to h1
+    o = [
+        [1, 1],     # s4
+        [1, 1],     # s3
+        [1],        # s2
+        [1],        # s1
+    ]
     print_poly(calculate_routeid(nodes, o, debug=DEBUG))
 
 
