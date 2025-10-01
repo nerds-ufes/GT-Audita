@@ -78,48 +78,6 @@ def _linear_topology_add_switches(net: Mininet):
 
     return (net, cores, edges)
 
-def simple_topology(start=True) -> Mininet:
-    "Create a network."
-    net = Mininet()
-    try:
-        # linkopts = dict()
-        net, hosts = _linear_topology_add_hosts(net)
-        net, cores, edges = _linear_topology_add_switches(net)
-
-        info("*** Creating links\n")
-        for i in range(0, N_SWITCHES):
-            net.addLink(hosts[i], edges[i], bw=LINK_SPEED)
-            net.addLink(edges[i], cores[i], bw=LINK_SPEED)
-
-        last_switch = None
-
-        for i in range(0, N_SWITCHES - 1):
-            switch = cores[i]
-
-            if last_switch:
-                net.addLink(last_switch, switch, bw=LINK_SPEED)
-            last_switch = switch
-
-        net.addLink(cores[0], cores[3], bw=LINK_SPEED)
-        net.addLink(cores[3], cores[2], bw=LINK_SPEED)
-
-        # host 11
-        net.addLink(hosts[-1], edges[0], bw=LINK_SPEED)
-
-        if start:
-            info("*** Starting network\n")
-            net.start()
-            net.staticArp()
-
-        # disabling offload for rx and tx on each host interface
-        for host in hosts:
-            host.cmd(f"ethtool --offload {host.name}-eth0 rx off tx off")
-
-        return net
-    except Exception as e:
-        net.stop()
-        raise e
-
 def linear_topology(start=True) -> Mininet:
     "Create a network."
     net = Mininet()

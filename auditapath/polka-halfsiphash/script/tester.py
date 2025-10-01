@@ -23,13 +23,12 @@ from .topo import (
     # all_ifaces,
     # connect_to_core_switch,
     linear_topology,
-    simple_topology,
     polka_json_path,
     # set_seed_e1,
     # set_seed_e10,
 )
 # from .calc_digests import calc_digests
-
+from .simple import simple_topology
 from time import sleep
 
 # from script.tester import linear_topology, Polka, PolkaProbe, integrity, start_sniffing
