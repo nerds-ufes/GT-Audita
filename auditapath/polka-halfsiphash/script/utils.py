@@ -1,5 +1,7 @@
 from .siphash import siphash
-from .polka_nhop import NODES, Node
+from .polka_nhop import Node
+from .linear_nodes import LINEAR_NODES
+from .simple_nodes import SIMPLE_NODES
 from hashlib import sha256
 
 edge_nodes = [f"e{i}" for i in range(1, 11)]
@@ -28,8 +30,14 @@ def calc_digests(route_id: int, node_id: str, seed: int) -> list:
     if node_id in edge_nodes:
         node_id = f"s{node_id[1:]}"
 
+    node = None
+    simple_routesIds = [75440656914980, 165772661694262, 222884173467157, 215038458956314, 11476003314842104240, 10482717147535550117]
+
     if isinstance(node_id, str):
-        node = [n for n in NODES if n.name == node_id][0]
+        if route_id in simple_routesIds:
+            node = [n for n in SIMPLE_NODES if n.name == node_id][0]
+        else:
+            node = [n for n in LINEAR_NODES if n.name == node_id][0]
     else:
         raise ValueError("Invalid `node_id` parameter")
 

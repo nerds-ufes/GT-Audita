@@ -52,31 +52,3 @@ class Node:
     def __repr__(self):
         return f"Switch({self.name})"
 
-
-NODES = [
-    Node(name, node_id)
-    for (name, node_id) in [
-        ("None", 0),  # Just for convenience, to match the index with the node number
-        ("s1", 0x002B),
-        ("s2", 0x002D),
-        ("s3", 0x0039),
-        ("s4", 0x003F),
-        ("s5", 0x0047),
-        ("s6", 0x0053),
-        ("s7", 0x008D),
-        ("s8", 0x00BD),
-        ("s9", 0x00D7),
-        ("s10", 0x00F5),
-    ]
-]
-
-# Setting up node links
-for i, node in enumerate(NODES[2:-1], start=2):  # Middle nodes
-    node.ports = [
-        None,  # Local (?)
-        None,  # Edge
-        NODES[i - 1],  # Node n-1 (previous)
-        NODES[i + 1],  # Node n+1 (next)
-    ]
-NODES[1].ports = [None, None, NODES[2], None]  # Edge node 1. Next is on port 2
-NODES[-1].ports = [None, None, NODES[-2], None]  # Edge node 10. Previous is on port 1
