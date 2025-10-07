@@ -34,13 +34,15 @@ from time import sleep
 # from script.tester import linear_topology, Polka, PolkaProbe, integrity, start_sniffing
 from script.call_api import call_deploy_flow_contract, call_set_ref_sig, hash_flow_id, call_log_probe, call_get_flow_compliance, call_get_flow_compliance_consolidation, call_set_new_route 
 # from .utils import calc_digests
-
+from mn_wifi.cli import CLI
+from .utils import polka_route_ids
 # T = TypeVar("T")
+
+import subprocess
 
 def ifaces_fn(net: Mininet):
     import re
     iname = re.compile(r"e\d+-eth2")
-    
     return [
         iface
         for switch in net.switches
@@ -62,8 +64,8 @@ def sniff_cb(pkt: Packet):
     assert icmp is not None, "❌ ICMP layer not found"
 
     if (icmp.type == 8):
-        #print(f"\nPacote capturado na interface: {pkt.sniffed_on}")
-        #print(pkt.summary())
+        # print(f"\nPacote capturado na interface: {pkt.sniffed_on}")
+        # print(pkt.summary())
         if(probe.timestamp == probe.l_hash):
             call_set_ref_sig(pkt)
         else:
@@ -117,7 +119,17 @@ def integrity(net: Mininet):
             elif action == "4":
                 routeId = input("New routeId: ")
                 call_set_new_route(hash_flow_id(src_host.IP(), "0", dst_host.IP(), "0"), routeId)
-    
+                
+                cmd = [
+                    "simple_switch_CLI",
+                    "--thrift-port",
+                    f"5010{src_host.name[-1]}",
+                ]
+                commands = f"table_delete tunnel_encap_process_sr 1\ntable_add tunnel_encap_process_sr add_sourcerouting_header {dst_host.IP()}/32 => 2 1 {dst_host.MAC()} {routeId}\nEOF\n"
+                res = subprocess.run(cmd, input=commands, capture_output=True, text=True, check=True)
+                print(f"res: {res}")
+
+                
             if action == "2" or action == "3":
                 call_get_flow_compliance(hash_flow_id(src_host.IP(), "0", dst_host.IP(), "0"))
 
@@ -141,8 +153,8 @@ def default():
         # sleep for a bit to let the network stabilize
         sleep(3)
         
-        call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
-        call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
+        call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"), polka_route_ids["h1"]["h10"])
+        call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"), polka_route_ids["h1"]["h10"])
 
         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
@@ -388,9 +400,6 @@ def complete_detour():
 
         # CLI(net)
 
-        #call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
-        #call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
-
         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
         integrity(net)
@@ -440,9 +449,6 @@ def outoforder():
         link = net.addLink(oor[1], oor[3], port1=3, port2=2, bw=LINK_SPEED)
         info(f"*** Created link {link}\n")
 
-        # net = set_seed_e1(net, 0xABADCAFE)
-        # net = set_seed_e10(net, 0xBADDC0DE)
-
         net.start()
         net.staticArp()
 
@@ -450,9 +456,6 @@ def outoforder():
         sleep(3)
 
         # CLI(net)
-
-        # call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
-        # call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
 
         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
@@ -500,9 +503,6 @@ def skipping():
         new_link = net.addLink(prev_sw, next_sw, port1=3, port2=2, bw=LINK_SPEED)
         info(f"*** Created link {new_link}\n")
 
-        # net = set_seed_e1(net, 0x61E8D6E7)
-        # net = set_seed_e10(net, 0xABADCAFE)
-
         net.start()
         net.staticArp()
 
@@ -510,9 +510,6 @@ def skipping():
         sleep(3)
 
         # CLI(net)
-
-        #call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"))
-        #call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"))
 
         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
@@ -530,14 +527,14 @@ def skipping():
         net.stop()
 
 def simple():
-    PATH1_H1_H4 = 89931881502587 
-    PATH1_H4_H1 = 89931881502584
+    PATH1_H1_H4 = 75440656914980
+    PATH1_H4_H1 = 165772661694262
 
-    PATH2_H1_H4 = 166807723460375
-    PATH2_H4_H1 = 42207349362690
+    PATH2_H1_H4 = 222884173467157
+    PATH2_H4_H1 = 215038458956314
 
-    PATH3_H1_H4 = 18205742658938488364
-    PATH3_H4_H1 = 2908909522564514583
+    PATH3_H1_H4 = 11476003314842104240
+    PATH3_H4_H1 = 10482717147535550117
 
     info("*** SIMPLE TEST ***\n")
     net = simple_topology(start=False)
