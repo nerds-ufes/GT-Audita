@@ -38,7 +38,6 @@ def _simple_topology_add_hosts(net: Mininet):
 
     return (net, hosts)
 
-
 def _simple_topology_add_switches(net: Mininet):
     edges = []
     cores = []
@@ -94,26 +93,34 @@ def simple_topology(start=True) -> Mininet:
 
         info("*** Creating links\n")
         for i in range(0, 2):
-            net.addLink(hosts[i], edges[i], bw=LINK_SPEED)
+            link = net.addLink(hosts[i], edges[i], port1=0, port2=1, bw=LINK_SPEED)
+            # info(f"*** Created link {link}\n")
         
-        net.addLink(edges[0], cores[0], bw=LINK_SPEED)
-        net.addLink(edges[1], cores[3], bw=LINK_SPEED)
+        link = net.addLink(edges[0], cores[0], port1=2, port2=1, bw=LINK_SPEED)
+        # info(f"*** Created link {link}\n")
+        link = net.addLink(edges[1], cores[3], port1=2, port2=1, bw=LINK_SPEED)
+        # info(f"*** Created link {link}\n")
 
         s1 = cores[0]
         s2 = cores[1]
         s3 = cores[2]
         s4 = cores[3]
+        
+        # Path 3 TEST
+        link = net.addLink(s1, s2, port1=2, port2=2, bw=LINK_SPEED)
+        # info(f"*** Created link {link}\n")
+        link = net.addLink(s2, s3, port1=3, port2=2, bw=LINK_SPEED)
+        # info(f"*** Created link {link}\n")
+        link = net.addLink(s3, s4, port1=3, port2=2, bw=LINK_SPEED)
+        # info(f"*** Created link {link}\n")
 
-        # Path-1 (s1 -> s2 -> s4)
-        net.addLink(s1, s2, bw=LINK_SPEED)
-        net.addLink(s2, s4, bw=LINK_SPEED)
+        # Path 1 TEST
+        link = net.addLink(s2, s4, port1=5, port2=4, bw=LINK_SPEED)
+        # info(f"*** Created link {link}\n")
 
-        # Path-2 (s1 -> s3 -> s4)
-        net.addLink(s1, s3, bw=LINK_SPEED)
-        net.addLink(s3, s4, bw=LINK_SPEED)
-
-        # Path-3 (s1 -> s2 -> s3 -> s4)
-        net.addLink(s2, s3, bw=LINK_SPEED)
+        # Path 2 TEST
+        link = net.addLink(s1, s3, port1=4, port2=4, bw=LINK_SPEED)
+        # info(f"*** Created link {link}\n")
 
         if start:
             info("*** Starting network\n")
