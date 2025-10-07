@@ -21,7 +21,7 @@ import script.tester as tester
 
 if __name__ == "__main__":
     setLogLevel("info")
-    
+
     print("\n*** (1)-Default\n*** (2)-Addition\n*** (3)-Partial Detour\n*** (4)-Complete Detour\n*** (5)-Skipping\n*** (6)-Out of Order\n*** (7)-Simple\n")
     case = input("*** Case: ")
 
