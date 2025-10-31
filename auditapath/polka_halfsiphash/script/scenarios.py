@@ -570,7 +570,7 @@ def simple():
         # sleep for a bit to let the network stabilize
         sleep(3)
         
-        for flow in simple_flows:
+        for flow in simple_flows.values():
             flow["flow_id"] = hash_flow_id(
                 flow["ip_src"], 
                 flow["port_src"], 
