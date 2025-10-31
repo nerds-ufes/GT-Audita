@@ -1,32 +1,30 @@
 #!/bin/bash
 
-# Inicializa blockchain e API
+SESSION="projeto-blockchain"
 
-cd blockchain
+# Inicia nova sessão com um painel
+tmux new-session -d -s $SESSION -n main
 
-# Abre um terminal com o Hardhat node
-gnome-terminal -- bash -c "npx hardhat node; exec bash"
+# Painel 0: besu node
+tmux send-keys -t $SESSION:0.0 'cd blockchain && docker compose up' C-m
+sleep 15
 
-# Aguarda 5 segundos para garantir que o Hardhat node inicialize
+# Split panels
+tmux split-window -h -t $SESSION:0.0
+tmux split-window -v -t $SESSION:0.0
+
+# Deploy Contract: Panel 1
+tmux send-keys -t $SESSION:0.1 'cd blockchain && npx hardhat ignition deploy ignition/modules/PoT.js --network besu' C-m
+tmux send-keys -t $SESSION:0.1 'y' C-m
+sleep 10
+
+# API: Panel 1
+tmux send-keys -t $SESSION:0.1 'cd ../auditapathAPI && python3 main.py' C-m
 sleep 5
 
-# Abre outro terminal para rodar o deploy
-gnome-terminal -- bash -c "npx hardhat ignition deploy ignition/modules/PoT.js --network localhost;"
+# Mininet: Panel 2
+tmux send-keys -t $SESSION:0.2 'cd polka-halfsiphash && sudo python3 run_linear_topology.py' C-m
+tmux select-pane -t $SESSION:0.2
 
-# Aguarda 5 segundos para garantir que o deploy seja realizado
-sleep 5
-
-# Inicializa a API
-gnome-terminal -- bash -c "
-    cd ../auditapathAPI;
-    python3 main.py;
-    exec bash;" 
-
-# Aguarda 5 segundos para garantir que a API seja inicializada
-sleep 5
-
-# Roda o teste com o Mininet
-gnome-terminal -- bash -c "
-    cd ../polka-halfsiphash;
-    sudo python3 run_linear_topology.py;
-    exec bash;" 
+# Exibe a sessão
+tmux attach -t $SESSION
