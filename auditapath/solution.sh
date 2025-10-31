@@ -23,7 +23,7 @@ tmux send-keys -t $SESSION:0.1 'cd ../auditapathAPI && python3 main.py' C-m
 sleep 5
 
 # Mininet: Panel 2
-tmux send-keys -t $SESSION:0.2 'cd polka-halfsiphash && sudo python3 run_linear_topology.py' C-m
+tmux send-keys -t $SESSION:0.2 'sudo python3 run.py' C-m
 tmux select-pane -t $SESSION:0.2
 
 # Exibe a sessão

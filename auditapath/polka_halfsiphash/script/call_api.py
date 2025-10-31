@@ -1,8 +1,8 @@
 from urllib import request, error
 import json
 
-from script.tester import Polka, PolkaProbe
-from script.utils import calc_digests, polka_route_ids, get_ingress_edge, calc_flow_id, hash_flow_id
+from .scenarios import Polka, PolkaProbe
+from .utils import calc_digests, polka_route_ids, get_ingress_edge, calc_flow_id, hash_flow_id
 
 ENDPOINT_URL = "http://localhost:5000/"
 EDGE_NODE_ADDRESS = "0xf17f52151EbEF6C7334FAD080c5704D77216b732"
@@ -74,13 +74,13 @@ def call_set_ref_sig(pkt):
 
     try:
         res = request.urlopen(req)
-        ip_pkt = pkt.getlayer("IP")
-        assert ip_pkt is not None, "❌ IP layer not found"
-        ip_src = ip_pkt.src
-        ip_dst = ip_pkt.dst
-        print(f"\n*** Registering reference signature in flow ({ip_src} -> {ip_dst}): " + flow_id)
-        print("Reference Signature: "  + data_dct["lightMultSig"])
-        print("Transaction hash: " + res.read().decode('utf-8').strip(), end="\n\n")
+    #    ip_pkt = pkt.getlayer("IP")
+    #    assert ip_pkt is not None, "❌ IP layer not found"
+    #    ip_src = ip_pkt.src
+    #    ip_dst = ip_pkt.dst
+    #    print(f"\n*** Registering reference signature in flow ({ip_src} -> {ip_dst}): " + flow_id)
+    #    print("Reference Signature: "  + data_dct["lightMultSig"])
+    #    print("Transaction hash: " + res.read().decode('utf-8').strip(), end="\n\n")
     except error.HTTPError as e:
         if e.code == 500:
             print("\n*** Registering reference signature in flow " + flow_id)
@@ -113,13 +113,13 @@ def call_log_probe(pkt):
 
     try:
         res = request.urlopen(req)
-        ip_pkt = pkt.getlayer("IP")
-        assert ip_pkt is not None, "❌ IP layer not found"
-        ip_src = ip_pkt.src
-        ip_dst = ip_pkt.dst
-        print(f"\n*** Logging probe signature in flow ({ip_src} -> {ip_dst}): " + flow_id)
-        print("Probe Signature: " + data_dct["lightMultSig"])
-        print("Transaction hash: " + res.read().decode('utf8').strip(), end="\n\n")
+    #    ip_pkt = pkt.getlayer("IP")
+    #    assert ip_pkt is not None, "❌ IP layer not found"
+    #    ip_src = ip_pkt.src
+    #    ip_dst = ip_pkt.dst
+    #    print(f"\n*** Logging probe signature in flow ({ip_src} -> {ip_dst}): " + flow_id)
+    #    print("Probe Signature: " + data_dct["lightMultSig"])
+    #    print("Transaction hash: " + res.read().decode('utf8').strip(), end="\n\n")
     except error.HTTPError as e:
         if e.code == 500:
             print("\n*** Logging probe signature in flow " + flow_id)

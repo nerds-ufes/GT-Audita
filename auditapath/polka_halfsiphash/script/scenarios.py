@@ -32,7 +32,7 @@ from .simple import simple_topology
 from time import sleep
 
 # from script.tester import linear_topology, Polka, PolkaProbe, integrity, start_sniffing
-from script.call_api import call_deploy_flow_contract, call_set_ref_sig, hash_flow_id, call_log_probe, call_get_flow_compliance, call_get_flow_compliance_consolidation, call_set_new_route 
+from .call_api import call_deploy_flow_contract, call_set_ref_sig, hash_flow_id, call_log_probe, call_get_flow_compliance, call_get_flow_compliance_consolidation, call_set_new_route 
 # from .utils import calc_digests
 from mn_wifi.cli import CLI
 from .utils import polka_route_ids
@@ -62,10 +62,8 @@ def sniff_cb(pkt: Packet):
     assert eth is not None, "❌ Ether layer not found"
     icmp = pkt.getlayer("ICMP")
     assert icmp is not None, "❌ ICMP layer not found"
-
+i
     if (icmp.type == 8):
-        # print(f"\nPacote capturado na interface: {pkt.sniffed_on}")
-        # print(pkt.summary())
         if(probe.timestamp == probe.l_hash):
             call_set_ref_sig(pkt)
         else:
@@ -76,10 +74,17 @@ def integrity(net: Mininet):
     Test the integrity of the network, this is to be used in a suite of testsdicionando um novo host e um link para o switch s1 dinamicamentei
     """
 
+    menu ="""
+    *** (1)-Send Probe
+    *** (2)-Compliance
+    *** (3)-Compliance Consolidation
+    *** (4)-Change Route
+    *** (5)-Exit
+    """
+
     while(1):
-        print("\n*** (1)-Send Probe\n*** (2)-Compliance\n*** (3)-Compliance Consolidation\n*** (4)-Change Route\n*** (5)-Exit")
-        action = input("\n*** Action: ")
-        print("\n\n")
+        action = input(menu + "\n  *** Action: ")
+
         if action == "1":
             print("*** Sending Probe(s)")
             src_host_name = input("SRC host: ") 
@@ -115,7 +120,6 @@ def integrity(net: Mininet):
                 )
             
                 src_host.cmd('ping -c ' + num_probes, dst_host.IP() + " &")
-                sleep(int(num_probes)*3)
             
         elif action == "2" or action == "3" or action == "4":
             print("*** Chose the flow")
