@@ -26,15 +26,11 @@ def _simple_topology_add_hosts(net: Mininet):
     hosts = []
 
     info("*** Adding hosts\n")
-    ip = f"10.0.1.1"
-    mac = f"00:00:00:00:{1:02x}:{1:02x}"
-    host = net.addHost(f"h1", ip=ip, mac=mac)
-    hosts.append(host)
-
-    ip = f"10.0.4.4"
-    mac = f"00:00:00:00:{4:02x}:{4:02x}"
-    host = net.addHost(f"h4", ip=ip, mac=mac)
-    hosts.append(host)
+    for i in range(1,11):
+        ip = f"10.0.{i}.{i}"
+        mac = f"00:00:00:00:{i:02x}:{i:02x}"
+        host = net.addHost(f"h{i}", ip=ip, mac=mac)
+        hosts.append(host)
 
     return (net, hosts)
 
@@ -55,6 +51,7 @@ def _simple_topology_add_switches(net: Mininet):
             switch_config=Path.join(polka_config_path, f"s{i}-commands.txt"),
             loglevel="debug",
             cls=P4Switch,
+            sw_args='--queue-depth 1024',
         )
         cores.append(switch)
 
@@ -67,6 +64,7 @@ def _simple_topology_add_switches(net: Mininet):
         switch_config=Path.join(polka_config_path, f"e1-commands.txt"),
         loglevel="debug",
         cls=P4Switch,
+        sw_args='--queue-depth 1024',
     )
     edges.append(switch)
     
@@ -78,6 +76,7 @@ def _simple_topology_add_switches(net: Mininet):
         switch_config=Path.join(polka_config_path, f"e4-commands.txt"),
         loglevel="debug",
         cls=P4Switch,
+        sw_args='--queue-depth 1024',
     )
     edges.append(switch)
 
@@ -92,13 +91,16 @@ def simple_topology(start=True) -> Mininet:
         net, cores, edges = _simple_topology_add_switches(net)
 
         info("*** Creating links\n")
-        for i in range(0, 2):
-            link = net.addLink(hosts[i], edges[i], port1=0, port2=1, bw=LINK_SPEED)
+        j = 0
+        for i in range(0, 10):
+            if i == 5:
+                j=1
+            link = net.addLink(hosts[i], edges[j], bw=LINK_SPEED)
             # info(f"*** Created link {link}\n")
         
-        link = net.addLink(edges[0], cores[0], port1=2, port2=1, bw=LINK_SPEED)
+        link = net.addLink(edges[0], cores[0], port1=6, port2=1, bw=LINK_SPEED)
         # info(f"*** Created link {link}\n")
-        link = net.addLink(edges[1], cores[3], port1=2, port2=1, bw=LINK_SPEED)
+        link = net.addLink(edges[1], cores[3], port1=6, port2=1, bw=LINK_SPEED)
         # info(f"*** Created link {link}\n")
 
         s1 = cores[0]

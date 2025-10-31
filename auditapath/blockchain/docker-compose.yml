@@ -10,7 +10,8 @@ services:
       --rpc-http-cors-origins="all"
       --rpc-http-enabled
       --metrics-enabled
-      --metrics-host=0.0.0.0
+      --metrics-host=192.168.0.70
+      --metrics-port=9545
       --host-allowlist="*"
       --rpc-http-api=ETH,NET,WEB3,DEBUG,TXPOOL
       --rpc-ws-enabled

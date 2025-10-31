@@ -74,7 +74,11 @@ def call_set_ref_sig(pkt):
 
     try:
         res = request.urlopen(req)
-        print("\n*** Registering reference signature in flow " + flow_id)
+        ip_pkt = pkt.getlayer("IP")
+        assert ip_pkt is not None, "❌ IP layer not found"
+        ip_src = ip_pkt.src
+        ip_dst = ip_pkt.dst
+        print(f"\n*** Registering reference signature in flow ({ip_src} -> {ip_dst}): " + flow_id)
         print("Reference Signature: "  + data_dct["lightMultSig"])
         print("Transaction hash: " + res.read().decode('utf-8').strip(), end="\n\n")
     except error.HTTPError as e:
@@ -109,7 +113,11 @@ def call_log_probe(pkt):
 
     try:
         res = request.urlopen(req)
-        print("\n*** Logging probe signature in flow " + flow_id)
+        ip_pkt = pkt.getlayer("IP")
+        assert ip_pkt is not None, "❌ IP layer not found"
+        ip_src = ip_pkt.src
+        ip_dst = ip_pkt.dst
+        print(f"\n*** Logging probe signature in flow ({ip_src} -> {ip_dst}): " + flow_id)
         print("Probe Signature: " + data_dct["lightMultSig"])
         print("Transaction hash: " + res.read().decode('utf8').strip(), end="\n\n")
     except error.HTTPError as e:

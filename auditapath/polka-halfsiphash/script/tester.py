@@ -42,7 +42,7 @@ import subprocess
 
 def ifaces_fn(net: Mininet):
     import re
-    iname = re.compile(r"e\d+-eth2")
+    iname = re.compile(r"e\d+-eth6")
     return [
         iface
         for switch in net.switches
@@ -83,35 +83,55 @@ def integrity(net: Mininet):
         if action == "1":
             print("*** Sending Probe(s)")
             src_host_name = input("SRC host: ") 
-            src_host = net.get(src_host_name)
-            assert src_host is not None, "Host " + src_host_name + " not found"
+            if src_host_name != "all":
+                src_host = net.get(src_host_name)
+                assert src_host is not None, "Host " + src_host_name + " not found"
          
             dst_host_name = input("DST host: ")
-            dst_host = net.get(dst_host_name)  # h11 is right beside h1, so wouldn't traverse all switches
-            assert dst_host is not None, "Host " + dst_host_name + " not found"
+            if dst_host_name != "all":
+                dst_host = net.get(dst_host_name)  # h11 is right beside h1, so wouldn't traverse all switches
+                assert dst_host is not None, "Host " + dst_host_name + " not found"
             
             num_probes = input("Number of probes: ")
 
-            info(
-                "\n*** Testing network integrity\n"
-                f"    a ping from {src_host.name} to {dst_host.name},\n"
-                "    goes through all core switches.\n"
-            )
+            if src_host_name == "all" or dst_host_name == "all":
+                info(
+                    "\n*** Testing network integrity\n"
+                    f"    ping all,\n"
+                    "    goes through all core switches.\n"
+                )
+                
+                for j in range(1,6):
+                    src_host = net.get(f"h{j}")
+                    dst_host = net.get(f"h{j+5}")
+                    src_host.cmd(f"ping -i 1 -c {num_probes} {dst_host.IP()} &")
+                    dst_host.cmd(f"ping -i 1 -c {num_probes} {src_host.IP()} &")
+
+            else:
+                info(
+                    "\n*** Testing network integrity\n"
+                    f"    a ping from {src_host.name} to {dst_host.name},\n"
+                    "    goes through all core switches.\n"
+                )
             
-            src_host.cmd('ping -c ' + num_probes, dst_host.IP())
-            sleep(int(num_probes)*15)
+                src_host.cmd('ping -c ' + num_probes, dst_host.IP() + " &")
+                sleep(int(num_probes)*3)
             
         elif action == "2" or action == "3" or action == "4":
             print("*** Chose the flow")
+            
             src_host_name = input("SRC host: ")
-            src_host = net.get(src_host_name)
-            assert src_host is not None, "Host " + src_host_name + " not found"
+            if src_host_name != "all":
+                src_host = net.get(src_host_name)
+                assert src_host is not None, "Host " + src_host_name + " not found"
 
             dst_host_name = input("DST host: ")
-            dst_host = net.get(dst_host_name)  # h11 is right beside h1, so wouldn't traverse all switches
-            assert dst_host is not None, "Host " + dst_host_name + " not found"
-            
-            print(f"{src_host}({src_host.IP()}) --> {dst_host}({dst_host.IP()})")
+            if dst_host_name != "all":
+                dst_host = net.get(dst_host_name)  # h11 is right beside h1, so wouldn't traverse all switches
+                assert dst_host is not None, "Host " + dst_host_name + " not found"
+
+            if src_host_name != "all" and dst_host_name != "all": 
+                print(f"{src_host}({src_host.IP()}) --> {dst_host}({dst_host.IP()})")
 
             if action == "3":
                 call_get_flow_compliance_consolidation(hash_flow_id(src_host.IP(), "0", dst_host.IP(), "0"))
@@ -131,7 +151,16 @@ def integrity(net: Mininet):
 
                 
             if action == "2" or action == "3":
-                call_get_flow_compliance(hash_flow_id(src_host.IP(), "0", dst_host.IP(), "0"))
+                if src_host_name == "all" or dst_host_name == "all":
+                    for i in range(1,6):
+                        src_host = net.get(f"h{i}")
+                        dst_host = net.get(f"h{i+5}")
+                        print(f"{src_host}({src_host.IP()}) --> {dst_host}({dst_host.IP()})")
+                        call_get_flow_compliance(hash_flow_id(src_host.IP(), "0", dst_host.IP(), "0"))
+                        print(f"{dst_host}({dst_host.IP()}) --> {src_host}({src_host.IP()})")
+                        call_get_flow_compliance(hash_flow_id(dst_host.IP(), "0", src_host.IP(), "0"))
+                else:
+                    call_get_flow_compliance(hash_flow_id(src_host.IP(), "0", dst_host.IP(), "0"))
 
             sleep(2)
 
@@ -551,9 +580,12 @@ def simple():
         sleep(3)
 
         # CLI(net)
-
-        call_deploy_flow_contract(flowId=hash_flow_id("10.0.1.1", "0", "10.0.4.4", "0"), routeId=PATH1_H1_H4)
-        call_deploy_flow_contract(flowId=hash_flow_id("10.0.4.4", "0", "10.0.1.1", "0"), routeId=PATH1_H4_H1)
+        
+        j = 6
+        for i in range(1,6):
+            call_deploy_flow_contract(flowId=hash_flow_id(f"10.0.{i}.{i}", "0", f"10.0.{j}.{j}", "0"), routeId=PATH1_H1_H4)
+            call_deploy_flow_contract(flowId=hash_flow_id(f"10.0.{j}.{j}", "0", f"10.0.{i}.{i}", "0"), routeId=PATH2_H4_H1)
+            j+=1
 
         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 

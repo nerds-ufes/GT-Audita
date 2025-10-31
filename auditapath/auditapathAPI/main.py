@@ -6,6 +6,7 @@ import json
 from http import HTTPStatus
 from dotenv import load_dotenv
 import os
+from time import sleep
 
 app = Flask(__name__)
 api = Api(app)
@@ -13,7 +14,8 @@ api = Api(app)
 load_dotenv()
 
 # Conectar-se ao Ganache (assumindo que o Ganache está rodando na porta padrão 8545)
-w3 = Web3(Web3.HTTPProvider('http://200.137.0.26:21031'))
+# w3 = Web3(Web3.HTTPProvider('http://200.137.0.26:21031')) iliada
+w3 = Web3(Web3.HTTPProvider('http://192.168.0.70:8545'))
 
 # Verificar a conexão
 if w3.is_connected():
@@ -31,7 +33,7 @@ print("Endereço da conta que realizou deploy: " + deployer_address)
 # Path arquivo abi
 smart_contract_name = 'PoTFactory'
 field_json = f'{smart_contract_name}Module#{smart_contract_name}'
-abi_file_path = '../blockchain/ignition/deployments/chain-10001/deployed_addresses.json'
+abi_file_path = '../blockchain/ignition/deployments/chain-1337/deployed_addresses.json'
 # Carregando a abi do arquivo json
 with open(abi_file_path, 'r') as json_file:
     data = json.load(json_file)
@@ -125,7 +127,7 @@ def call_newFlow(newFlowContract):
 
 # Função para chamar `setFlowProbeHash` e emitir o evento
 def call_setFlowProbeHash(newRefSig):
-
+    
     tx = contract.functions.setFlowProbeHash(
         newRefSig['flowId'],
         newRefSig['timestamp'],
@@ -133,8 +135,8 @@ def call_setFlowProbeHash(newRefSig):
     ).build_transaction({
         'from': controller_address,
         'gas': 2000000,
-        'gasPrice': w3.to_wei('20', 'gwei'),
-        'nonce': w3.eth.get_transaction_count(controller_address),
+        'gasPrice': w3.to_wei('30', 'gwei'),
+        'nonce': w3.eth.get_transaction_count(controller_address, 'pending'),
         'chainId': w3.eth.chain_id  
     })
 
@@ -158,10 +160,10 @@ def call_logFlowProbeHash(newlogProbe):
         'from': egress_address,
         'gas': 2000000,
         'gasPrice': w3.to_wei('20', 'gwei'),
-        'nonce': w3.eth.get_transaction_count(egress_address),
+        'nonce': w3.eth.get_transaction_count(egress_address, 'pending'),
         'chainId': w3.eth.chain_id  
     })
-    
+
     signed_tx = w3.eth.account.sign_transaction(tx, egress_private_key)
 
     # Envia a transação assinada
@@ -307,21 +309,21 @@ def setRefSig():
 
     tx_hash = call_setFlowProbeHash(newRefSig)
 
-    status_http = verify_tx_status(tx_hash)
+    #status_http = verify_tx_status(tx_hash)
 
-    if(status_http == HTTPStatus.OK):
-        message = tx_hash
-    else: 
-        try:
-            tx = w3.eth.get_transaction(tx_hash) 
-            w3.eth.call({
-                'to': tx['to'],
-                'data': tx['input']
-            })
-        except Web3RPCError as e:
-            message = e.rpc_response['error']['message']
-    
-    return jsonify(message), status_http
+    #if(status_http == HTTPStatus.OK):
+    message = tx_hash
+    #else: 
+    #    try:
+    #        tx = w3.eth.get_transaction(tx_hash) 
+    #        w3.eth.call({
+    #            'to': tx['to'],
+    #            'data': tx['input']
+    #        })
+    #    except Web3RPCError as e:
+    #        message = e.rpc_response['error']['message']
+    #
+    return jsonify(message)#, status_http
 
 @app.route('/logProbe', methods=['POST'])
 def logProbe():
@@ -342,21 +344,21 @@ def logProbe():
 
     tx_hash = call_logFlowProbeHash(newlogProbe)
 
-    status_http = verify_tx_status(tx_hash)
+    #status_http = verify_tx_status(tx_hash)
 
-    if(status_http == HTTPStatus.OK):
-        message = tx_hash
-    else: 
-        try:
-            tx = w3.eth.get_transaction(tx_hash) 
-            w3.eth.call({
-                'to': tx['to'],
-                'data': tx['input']
-            })
-        except Web3RPCError as e:
-            message = e.rpc_response['error']['message']
-    
-    return jsonify(message), status_http
+    #if(status_http == HTTPStatus.OK):
+    message = tx_hash
+    #else: 
+    #    try:
+    #        tx = w3.eth.get_transaction(tx_hash) 
+    #        w3.eth.call({
+    #            'to': tx['to'],
+    #            'data': tx['input']
+    #        })
+    #    except Web3RPCError as e:
+    #        message = e.rpc_response['error']['message']
+    #
+    return jsonify(message)#, status_http
 
 
 @app.route('/setRouteId', methods=['POST'])
