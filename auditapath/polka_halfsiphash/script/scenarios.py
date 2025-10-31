@@ -39,6 +39,7 @@ from .utils import polka_route_ids
 # T = TypeVar("T")
 
 import subprocess
+from .simple_flows import flows as simple_flows
 
 def ifaces_fn(net: Mininet):
     import re
@@ -62,7 +63,7 @@ def sniff_cb(pkt: Packet):
     assert eth is not None, "❌ Ether layer not found"
     icmp = pkt.getlayer("ICMP")
     assert icmp is not None, "❌ ICMP layer not found"
-i
+
     if (icmp.type == 8):
         if(probe.timestamp == probe.l_hash):
             call_set_ref_sig(pkt)
@@ -560,36 +561,23 @@ def skipping():
         net.stop()
 
 def simple():
-    PATH1_H1_H4 = 75440656914980
-    PATH1_H4_H1 = 165772661694262
-
-    PATH2_H1_H4 = 222884173467157
-    PATH2_H4_H1 = 215038458956314
-
-    PATH3_H1_H4 = 11476003314842104240
-    PATH3_H4_H1 = 10482717147535550117
-
     info("*** SIMPLE TEST ***\n")
     net = simple_topology(start=False)
     try:
-        # Switch ports
-        # Generally, on core POV:
-        # eth0 = lo?
-        # eth1 = edge
-
         net.start()
         net.staticArp()
 
         # sleep for a bit to let the network stabilize
         sleep(3)
-
-        # CLI(net)
         
-        j = 6
-        for i in range(1,6):
-            call_deploy_flow_contract(flowId=hash_flow_id(f"10.0.{i}.{i}", "0", f"10.0.{j}.{j}", "0"), routeId=PATH1_H1_H4)
-            call_deploy_flow_contract(flowId=hash_flow_id(f"10.0.{j}.{j}", "0", f"10.0.{i}.{i}", "0"), routeId=PATH2_H4_H1)
-            j+=1
+        for flow in simple_flows:
+            flow["flow_id"] = hash_flow_id(
+                flow["ip_src"], 
+                flow["port_src"], 
+                flow["ip_dst"], 
+                flow["port_dst"]
+            )
+            call_deploy_flow_contract(flow["flow_id"], flow["current_route"])
 
         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
