@@ -87,13 +87,13 @@ def integrity(net: Mininet, flows):
         for idx, flow in f.items():
             host_src = flow["host_src"]
             host_dst = flow["host_dst"]
-            print(f"\n--- ({idx})-Flow (from {host_src} -> to {host_dst}")
+            print(f"*** ({idx})-Flow (from {host_src} -> to {host_dst}")
 
     while(1):
         action = input(menu + "\n--- Action: ")
 
         if action == "1":
-            print("*** Choose flow to audit:")
+            print("\n*** Choose flow to audit:")
             print_flows(flows)
             print(f"--- ({len(flows)})-All flows")
             idx_flow = input("--- Flow: ")
