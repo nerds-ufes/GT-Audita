@@ -17,7 +17,7 @@ if __name__ == "__main__":
     *** (6)-Out of Order
     """
 
-    topology = input(topology_menu + "\n*** Topology: ")
+    topology = input(topology_menu + "\n    *** Topology: ")
 
     if topology == "1":
         scenarios.simple()

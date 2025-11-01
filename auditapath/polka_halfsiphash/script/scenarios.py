@@ -84,18 +84,18 @@ def integrity(net: Mininet, flows):
     """
 
     while(1):
-        action = input(menu + "\n  *** Action: ")
+        action = input(menu + "\n    *** Action: ")
 
         if action == "1":
-            print("*** Audit:")
+            print("    *** Audit:")
             for idx, flow in flows.items():
                 host_src = flow["host_src"]
                 host_dst = flow["host_dst"]
-                print(f"*** ({idx})-Flow {host_src} -> {host_dst}")
-            print(f"*** ({len(flows)})-All flows")
-            idx_flow = input("*** Flow: ")
-            rate = input("*** -i(seconds):")
-            duration = input("*** -w(seconds): ")
+                print(f"    *** ({idx})-Flow {host_src} -> {host_dst}")
+            print(f"    *** ({len(flows)})-All flows")
+            idx_flow = input("    *** Flow: ")
+            rate = input("    *** -i(seconds): ")
+            duration = input("    *** -w(seconds): ")
 
             try:
                 int(idx_flow)
@@ -114,10 +114,10 @@ def integrity(net: Mininet, flows):
                     host_src.cmd(f"ping -i {rate} -w {duration} {ip_dst} &")
 
                 else:
-                    print("*** Invalid value of Flow")
+                    print("    *** Invalid value of Flow")
 
             except ValueError:
-                print("*** Invalid values of Flow/-i/-w")
+                print("    *** Invalid values of Flow/-i/-w")
 
         elif action == "2" or action == "3" or action == "4":
             print("*** Chose the flow")
