@@ -106,12 +106,12 @@ def integrity(net: Mininet, flows):
                     for flow in flows.values():
                         host_src = net.get(flow["host_src"])
                         ip_dst = flow["ip_dst"]
-                        src_host.cmd(f"ping -i {rate} -w {duration} {ip_dst} &")
+                        host_src.cmd(f"ping -i {rate} -w {duration} {ip_dst} &")
 
                 elif idx_flow in flows:
                     host_src = net.get(flows[idx_flow]["host_src"])
                     ip_dst = flows[idx_flow]["ip_dst"]
-                    src_host.cmd(f"ping -i {rate} -w {duration} {ip_dst} &")
+                    host_src.cmd(f"ping -i {rate} -w {duration} {ip_dst} &")
 
                 else:
                     print("*** Invalid value of Flow")
