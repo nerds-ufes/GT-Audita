@@ -88,43 +88,36 @@ def integrity(net: Mininet, flows):
 
         if action == "1":
             print("*** Audit:")
-            for idx, flow in flows.itens():
-                print(f"*** {idx} : Flow {flow["host_src"]} -> {flow["host_dst"]}")
-            print("*** All")
+            for idx, flow in flows.items():
+                host_src = flow["host_src"]
+                host_dst = flow["host_dst"]
+                print(f"*** ({idx})-Flow {host_src} -> {host_dst}")
+            print(f"*** ({len(flows)})-All flows")
             idx_flow = input("*** Flow: ")
             rate = input("*** -i(seconds):")
             duration = input("*** -w(seconds): ")
 
-            if flow == "all":
-                info(
-                    "\n*** Testing network integrity\n"
-                    f"    ping all,\n"
-                    "    goes through all core switches.\n"
-                )
-                
-                for flow in flows.values():
-                    host_src = net.get(flow["host_src"])
-                    ip_dst = flow["ip_dst"]
-                    try:
-                        float(rate)
-                        float(duration)
+            try:
+                int(idx_flow)
+                float(rate)
+                float(duration)
+
+                if idx_flow == str(len(flows)):
+                    for flow in flows.values():
+                        host_src = net.get(flow["host_src"])
+                        ip_dst = flow["ip_dst"]
                         src_host.cmd(f"ping -i {rate} -w {duration} {ip_dst} &")
-                    except ValueError:
-                        print("*** Invalid values of -i and -w")
 
-            elif idx_flow in flow:
-                host_src = net.get(flows[idx_flow]["host_src"])
-                ip_dst = flows[idx_flow]["ip_dst"]
+                elif idx_flow in flows:
+                    host_src = net.get(flows[idx_flow]["host_src"])
+                    ip_dst = flows[idx_flow]["ip_dst"]
+                    src_host.cmd(f"ping -i {rate} -w {duration} {ip_dst} &")
 
-                try:
-                    float(rate)
-                    float(duration)
-                    host_src.cmd(f"ping -i {rate} -w {duration} {ip_dst} &")
-                except ValueError:
-                    print("*** Invalid values of -i and -w")
+                else:
+                    print("*** Invalid value of Flow")
 
-            else:
-                print("*** Invalid value of flow")
+            except ValueError:
+                print("*** Invalid values of Flow/-i/-w")
 
         elif action == "2" or action == "3" or action == "4":
             print("*** Chose the flow")
