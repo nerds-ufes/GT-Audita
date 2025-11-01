@@ -70,7 +70,7 @@ def sniff_cb(pkt: Packet):
         else:
             call_log_probe(pkt)
 
-def integrity(net: Mininet):
+def integrity(net: Mininet, flows):
     """
     Test the integrity of the network, this is to be used in a suite of testsdicionando um novo host e um link para o switch s1 dinamicamentei
     """
@@ -87,41 +87,45 @@ def integrity(net: Mininet):
         action = input(menu + "\n  *** Action: ")
 
         if action == "1":
-            print("*** Sending Probe(s)")
-            src_host_name = input("SRC host: ") 
-            if src_host_name != "all":
-                src_host = net.get(src_host_name)
-                assert src_host is not None, "Host " + src_host_name + " not found"
-         
-            dst_host_name = input("DST host: ")
-            if dst_host_name != "all":
-                dst_host = net.get(dst_host_name)  # h11 is right beside h1, so wouldn't traverse all switches
-                assert dst_host is not None, "Host " + dst_host_name + " not found"
-            
-            num_probes = input("Number of probes: ")
+            print("*** Audit:")
+            for idx, flow in flows.itens():
+                print(f"*** {idx} : Flow {flow["host_src"]} -> {flow["host_dst"]}")
+            print("*** All")
+            idx_flow = input("*** Flow: ")
+            rate = input("*** -i(seconds):")
+            duration = input("*** -w(seconds): ")
 
-            if src_host_name == "all" or dst_host_name == "all":
+            if flow == "all":
                 info(
                     "\n*** Testing network integrity\n"
                     f"    ping all,\n"
                     "    goes through all core switches.\n"
                 )
                 
-                for j in range(1,6):
-                    src_host = net.get(f"h{j}")
-                    dst_host = net.get(f"h{j+5}")
-                    src_host.cmd(f"ping -i 1 -c {num_probes} {dst_host.IP()} &")
-                    dst_host.cmd(f"ping -i 1 -c {num_probes} {src_host.IP()} &")
+                for flow in flows.values():
+                    host_src = net.get(flow["host_src"])
+                    ip_dst = flow["ip_dst"]
+                    try:
+                        float(rate)
+                        float(duration)
+                        src_host.cmd(f"ping -i {rate} -w {duration} {ip_dst} &")
+                    except ValueError:
+                        print("*** Invalid values of -i and -w")
+
+            elif idx_flow in flow:
+                host_src = net.get(flows[idx_flow]["host_src"])
+                ip_dst = flows[idx_flow]["ip_dst"]
+
+                try:
+                    float(rate)
+                    float(duration)
+                    host_src.cmd(f"ping -i {rate} -w {duration} {ip_dst} &")
+                except ValueError:
+                    print("*** Invalid values of -i and -w")
 
             else:
-                info(
-                    "\n*** Testing network integrity\n"
-                    f"    a ping from {src_host.name} to {dst_host.name},\n"
-                    "    goes through all core switches.\n"
-                )
-            
-                src_host.cmd('ping -c ' + num_probes, dst_host.IP() + " &")
-            
+                print("*** Invalid value of flow")
+
         elif action == "2" or action == "3" or action == "4":
             print("*** Chose the flow")
             
@@ -571,17 +575,18 @@ def simple():
         sleep(3)
         
         for flow in simple_flows.values():
-            flow["flow_id"] = hash_flow_id(
+            flow_id = hash_flow_id(
                 flow["ip_src"], 
                 flow["port_src"], 
                 flow["ip_dst"], 
                 flow["port_dst"]
             )
-            call_deploy_flow_contract(flow["flow_id"], flow["current_route"])
+            flow["flow_id"] = flow_id
+            call_deploy_flow_contract(flow_id, flow["current_route"])
 
         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
-        integrity(net)
+        integrity(net, simple_flows)
 
         # Time to finish printing the logs
         sleep(2)
