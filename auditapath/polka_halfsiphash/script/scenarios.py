@@ -75,30 +75,30 @@ def integrity(net: Mininet, flows):
     Test the integrity of the network, this is to be used in a suite of testsdicionando um novo host e um link para o switch s1 dinamicamentei
     """
 
-    menu ="""
-    *** (1)-Send Probe
-    *** (2)-Compliance
-    *** (3)-Compliance Consolidation
-    *** (4)-Change Route
-    *** (5)-Exit
-    """
+    menu = """
+*** (1)-Send Probe
+*** (2)-Compliance
+*** (3)-Compliance Consolidation
+*** (4)-Change Route
+*** (5)-Exit
+"""
 
     def print_flows(f):
         for idx, flow in f.items():
             host_src = flow["host_src"]
             host_dst = flow["host_dst"]
-            print(f"        *** ({idx})-Flow (from {host_src} -> to {host_dst}")
+            print(f"\n--- ({idx})-Flow (from {host_src} -> to {host_dst}")
 
     while(1):
-        action = input(menu + "\n    *** Action: ")
+        action = input(menu + "\n--- Action: ")
 
         if action == "1":
-            print("    *** Choose flow to audit:")
+            print("*** Choose flow to audit:")
             print_flows(flows)
-            print(f"    *** ({len(flows)})-All flows")
-            idx_flow = input("    *** Flow: ")
-            rate = input("    *** -i(seconds): ")
-            duration = input("    *** -w(seconds): ")
+            print(f"--- ({len(flows)})-All flows")
+            idx_flow = input("--- Flow: ")
+            rate = input("--- -i(seconds): ")
+            duration = input("--- -w(seconds): ")
 
             try:
                 int(idx_flow)
@@ -117,10 +117,10 @@ def integrity(net: Mininet, flows):
                     host_src.cmd(f"ping -i {rate} -w {duration} {ip_dst} &")
 
                 else:
-                    print("    *** Invalid value of Flow")
+                    print("*** Invalid value of Flow")
 
             except ValueError:
-                print("    *** Invalid values of Flow/-i/-w")
+                print("*** Invalid values of Flow/-i/-w")
 
         elif action == "2" or action == "3" or action == "4":
             print("*** Chose the flow")
