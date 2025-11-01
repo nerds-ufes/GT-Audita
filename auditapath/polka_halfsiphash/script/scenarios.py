@@ -122,55 +122,87 @@ def integrity(net: Mininet, flows):
             except ValueError:
                 print("*** Invalid values of Flow/-i/-w")
 
-        elif action == "2" or action == "3" or action == "4":
-            print("*** Chose the flow")
+        elif action == "2":
+            print("\n*** Chose the flow")
+            print_flows(flows)
+            print(f"    *** ({len(flows)})-All flows")
+            idx_flow = input("--- Flow: ")
+
+            if idx_flow == str(len(flows)):
+                for flow in flows.values():
+                    call_get_flow_compliance(flow["flow_id"])
             
-            src_host_name = input("SRC host: ")
-            if src_host_name != "all":
-                src_host = net.get(src_host_name)
-                assert src_host is not None, "Host " + src_host_name + " not found"
+            elif idx_flow in flows:
+                call_get_flow_compliance(flow[idx_flow]["flow_id"])
+            
+            else:
+                print("*** Invalid value of Flow")
 
-            dst_host_name = input("DST host: ")
-            if dst_host_name != "all":
-                dst_host = net.get(dst_host_name)  # h11 is right beside h1, so wouldn't traverse all switches
-                assert dst_host is not None, "Host " + dst_host_name + " not found"
+        elif action == "3":
+            print("\n*** Chose the flow")
+            print_flows(flows)
+            idx_flow = input("--- Flow: ")
+            
+            if idx_flow in flows:
+                call_get_flow_compliance_consolidation(flows[idx_flow]["flow_id"])
+                call_get_flow_compliance(flows[idx_flow]["flow_id"])
+            else:
+                print("*** Invalid value of Flow")
 
-            if src_host_name != "all" and dst_host_name != "all": 
-                print(f"{src_host}({src_host.IP()}) --> {dst_host}({dst_host.IP()})")
+        elif action == "4":
+            print("\n*** Chose the flow")
+            print_flows(flows)
+            idx_flow = input("--- Flow: ")
 
-            if action == "3":
-                call_get_flow_compliance_consolidation(hash_flow_id(src_host.IP(), "0", dst_host.IP(), "0"))
-
-            elif action == "4":
-                routeId = input("New routeId: ")
-                call_set_new_route(hash_flow_id(src_host.IP(), "0", dst_host.IP(), "0"), routeId)
+            if idx_flow in flows:
+                flow = flows[idx_flow]
+                i = 0
+                for route_idx, route_id in flow["routes"].items():
+                    print(f"    *** ({route_idx})-{route_id}")
+                    i+=1
+                route_idx = input("\n--- Route: ")
                 
-                cmd = [
-                    "simple_switch_CLI",
-                    "--thrift-port",
-                    f"5010{src_host.name[-1]}",
-                ]
-                commands = f"table_delete tunnel_encap_process_sr 1\ntable_add tunnel_encap_process_sr add_sourcerouting_header {dst_host.IP()}/32 => 2 1 {dst_host.MAC()} {routeId}\nEOF\n"
-                res = subprocess.run(cmd, input=commands, capture_output=True, text=True, check=True)
-                print(f"res: {res}")
+                if route_idx in flow["routes"]:
+                    if flow["current_route"] != flow["routes"]["route_idx"]:
+                        call_set_new_route(flow["flow_id"], flow["routes"]["route_idx"])
+                        
+                        cmd = [
+                            "simple_switch_CLI",
+                            "--thrift-port",
+                            f"5010{src_host.name[-1]}",
+                        ]
+                        commands = f"table_delete tunnel_encap_process_sr 1\ntable_add tunnel_encap_process_sr add_sourcerouting_header {dst_host.IP()}/32 => 2 1 {dst_host.MAC()} {routeId}\nEOF\n"
+                        subprocess.run(
+                            cmd,
+                            input=commands,
+                            capture_output=True,
+                            text=True,
+                            check=True
+                        )
 
-                
-            if action == "2" or action == "3":
-                if src_host_name == "all" or dst_host_name == "all":
-                    for i in range(1,6):
-                        src_host = net.get(f"h{i}")
-                        dst_host = net.get(f"h{i+5}")
-                        print(f"{src_host}({src_host.IP()}) --> {dst_host}({dst_host.IP()})")
-                        call_get_flow_compliance(hash_flow_id(src_host.IP(), "0", dst_host.IP(), "0"))
-                        print(f"{dst_host}({dst_host.IP()}) --> {src_host}({src_host.IP()})")
-                        call_get_flow_compliance(hash_flow_id(dst_host.IP(), "0", src_host.IP(), "0"))
+                    else:
+                        print("*** This route is the currente route")
+
                 else:
-                    call_get_flow_compliance(hash_flow_id(src_host.IP(), "0", dst_host.IP(), "0"))
+                    print("*** Invalid Route")
 
-            sleep(2)
+            else:
+                print("*** Invalid Flow")
+
+            
+            cmd = [
+                "simple_switch_CLI",
+                "--thrift-port",
+                f"5010{src_host.name[-1]}",
+            ]
+            commands = f"table_delete tunnel_encap_process_sr 1\ntable_add tunnel_encap_process_sr add_sourcerouting_header {dst_host.IP()}/32 => 2 1 {dst_host.MAC()} {routeId}\nEOF\n"
+            subprocess.run(cmd, input=commands, capture_output=True, text=True, check=True)
 
         elif action == "5":
             break
+
+        else:
+            print("*** Invalid action")
 
 def default():
     """
@@ -562,6 +594,7 @@ def skipping():
 
 def simple():
     info("*** SIMPLE TEST ***\n")
+    print("\n")
     net = simple_topology(start=False)
     try:
         net.start()
