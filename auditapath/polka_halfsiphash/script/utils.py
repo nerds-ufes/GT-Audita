@@ -1,7 +1,7 @@
 from .siphash import siphash
 from .polka_nhop import Node
 from ..linear_topology.nodes import LINEAR_NODES
-from .simple_nodes import SIMPLE_NODES
+from ..simple_topology.nodes import SIMPLE_NODES
 from hashlib import sha256
 
 edge_nodes = [f"e{i}" for i in range(1, 11)]
