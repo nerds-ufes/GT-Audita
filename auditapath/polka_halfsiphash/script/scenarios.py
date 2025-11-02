@@ -219,13 +219,12 @@ def integrity(net: Mininet, flows):
                 if route_idx in flow["routes"]:
                     if flow["current_route"] != flow["routes"][route_idx]:
                         route_id = flow["routes"][route_idx]
-                        call_set_new_route(flow["flow_id"], route_id)
                         host_src = net.get(flow["host_src"])
                         host_dst = net.get(flow["host_dst"])
                         
                         client, transport = connect_to_switch(50101)
                         if client:
-                            entries = client.bm_mt_get_entries(0, "tunnel_encap_process_sr")
+                            entries = client.bm_mt_get_entries(0, "MyIngress.TunnelEncap.tunnel_encap_process_sr")
                             handle_encontrado = None
                             for entry in entries:
                                 # entry.match_key é uma lista de objetos BmMatchParam
@@ -243,15 +242,13 @@ def integrity(net: Mininet, flows):
                                     import socket
                                     # :4 seleciona os 4 bytes do IP
                                     ip_addr = socket.inet_ntoa(prefix[:4])
-                                    print(type(ip_addr), ip_addr)
                                     ip_str_com_prefixo = f"{ip_addr}/{prefix_len}"
                                     
                                     # 3. VERIFICAR SE É A ROTA QUE QUEREMOS
                                     if ip_addr == host_dst.IP():
                                         handle_encontrado = entry.entry_handle
-                                        print(f"!!! Handle encontrado para {IP_PARA_MODIFICAR}: {handle_encontrado}")
-                                        break # Achamos, saia do loop
-                            
+                                        print(f"!!! Handle encontrado para {host_dst.IP()}: {handle_encontrado}")
+                                        break # Achamos, saia do loop           
                             if handle_encontrado is not None:
                                 print(f"Modificando a entrada com handle {handle_encontrado}...") 
                                 # 6, 1, "00:00:00:00:01:01", 12345
@@ -263,38 +260,26 @@ def integrity(net: Mininet, flows):
                                     (route_id).to_bytes(8, 'big') # Assumindo 8 bytes
                                 ]
                                 client.bm_mt_modify_entry(
-                                    0, "tunnel_encap_process_sr", handle_encontrado, "add_sourcerouting_header", new_action_params
+                                    0,
+                                    "MyIngress.TunnelEncap.tunnel_encap_process_sr",
+                                    handle_encontrado,
+                                    "MyIngress.TunnelEncap.add_sourcerouting_header",
+                                    new_action_params
                                 )
+
+                                flow["current_route"] = route_id
+                                call_set_new_route(flow["flow_id"], route_id)
 
                             else:
                                 print(f"Nenhuma entrada encontrada para {host_dst.IP()}.")
-
-                        # cmd = [
-                        #     "simple_switch_CLI",
-                        #     "--thrift-port",
-                        #     f"5010{host_src.name[-1]}",
-                        # ]
-                        # commands = f"table_delete tunnel_encap_process_sr 1\ntable_add tunnel_encap_process_sr add_sourcerouting_header {host_dst.IP()}/32 => 2 1 {host_dst.MAC()} {route_id}\nEOF\n"
-                        # subprocess.run(
-                        #     cmd,
-                        #     input=commands,
-                        #     capture_output=True,
-                        #     text=True,
-                        #     check=True
-                        # )
-
                     else:
                         print("*** This route is the currente route")
-
                 else:
                     print("*** Invalid Route")
-
             else:
                 print("*** Invalid Flow")
-
         elif action == "5":
             break
-
         else:
             print("*** Invalid action")
 
