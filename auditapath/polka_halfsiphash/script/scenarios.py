@@ -82,9 +82,9 @@ def disconnect_from_switch(transport):
         print("Fechando conexão com o switch.")
         transport.close()
 
-def ifaces_fn(net: Mininet):
+def ifaces_fn(net: Mininet, port):
     import re
-    iname = re.compile(r"e\d+-eth6")
+    iname = re.compile(rf"e\d+-eth{port}")
     return [
         iface
         for switch in net.switches
@@ -303,7 +303,7 @@ def default():
             flow["flow_id"] = flow_id
             call_deploy_flow_contract(flow_id, flow["current_route"])
 
-        sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
+        sniff = start_sniffing(net, 2, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
         integrity(net)
 
@@ -707,7 +707,7 @@ def simple():
             flow["flow_id"] = flow_id
             call_deploy_flow_contract(flow_id, flow["current_route"])
 
-        sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
+        sniff = start_sniffing(net, 6, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
         integrity(net, simple_flows)
 

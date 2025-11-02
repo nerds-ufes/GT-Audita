@@ -46,12 +46,12 @@ bind_layers(Polka, PolkaProbe, version=PROBE_VERSION)
 bind_layers(PolkaProbe, IP)
 
 
-def start_sniffing(net: Mininet, ifaces_fn = all_ifaces, cb: Optional[Callable[[Packet], Optional[str]]] = None):
+def start_sniffing(net: Mininet, port, ifaces_fn = all_ifaces, cb: Optional[Callable[[Packet], Optional[str]]] = None):
     info(f"*** 👃 Sniffing on {ifaces_fn(net)}\n")
 
     sniffer = AsyncSniffer(
         # All ifaces
-        iface=ifaces_fn(net),
+        iface=ifaces_fn(net, port),
         # filter=f"ether proto {POLKA_PROTO:#x}",
         filter="ether proto 0x1234",
         store=False,
