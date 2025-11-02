@@ -1,4 +1,4 @@
-simple_flows = {
+flows = {
     "0": {
         "flow_id":"",
         "host_src":"h1",
