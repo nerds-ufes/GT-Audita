@@ -12,7 +12,7 @@ from scapy.layers.l2 import Ether
 from scapy.layers.inet import TCP, UDP, ICMP, IP
 from mn_wifi.net import Mininet, info  # type: ignore assumes import exists, it's from p4-utils
 
-from .topo import all_ifaces
+from ..linear_topology.linear_topology import all_ifaces
 
 POLKA_PROTO = 0x1234
 PROBE_VERSION = 0xF1

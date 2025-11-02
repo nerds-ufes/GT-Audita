@@ -1,4 +1,4 @@
-from .polka_nhop import Node 
+from ..script.polka_nhop import Node 
 
 LINEAR_NODES = [
     Node(name, node_id)

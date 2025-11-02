@@ -17,7 +17,7 @@ from scapy.all import Packet
 
 from .scapy import Polka, PolkaProbe, start_sniffing
 # from .thrift import set_crc_parameters_common
-from .topo import (
+from ..linear_topology.linear_topology import (
     CORE_THRIFT_CORE_OFFSET,
     LINK_SPEED,
     # all_ifaces,

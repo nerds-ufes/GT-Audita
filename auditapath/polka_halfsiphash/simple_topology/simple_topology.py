@@ -2,15 +2,12 @@
 For topology configuration, parameters and related.
 """
 
-from .thrift import thrift_connect_standard
-
 from os import path as Path
 
 # https://mininet.org/api/hierarchy.html
 from mininet.log import info
 from mn_wifi.net import Mininet  # type: ignore assumes import exists, it's from p4-utils
 from mn_wifi.bmv2 import P4Switch  # type: ignore assumes import exists, it's from p4-utils
-
 
 N_SWITCHES = 4
 LINK_SPEED = 10
@@ -20,7 +17,6 @@ EDGE_THRIFT_CORE_OFFSET = 50100
 
 polka_json_path = Path.join(Path.split(Path.split(__file__)[0])[0], "polka")
 polka_config_path = Path.join(polka_json_path, "config_simple")
-
 
 def _simple_topology_add_hosts(net: Mininet):
     hosts = []
@@ -63,8 +59,7 @@ def _simple_topology_add_switches(net: Mininet):
         thriftport=EDGE_THRIFT_CORE_OFFSET + 1,
         switch_config=Path.join(polka_config_path, f"e1-commands.txt"),
         loglevel="debug",
-        cls=P4Switch,
-        sw_args='--queue-depth 1024',
+        cls=P4Switch
     )
     edges.append(switch)
     
@@ -75,8 +70,7 @@ def _simple_topology_add_switches(net: Mininet):
         thriftport=EDGE_THRIFT_CORE_OFFSET + 4,
         switch_config=Path.join(polka_config_path, f"e4-commands.txt"),
         loglevel="debug",
-        cls=P4Switch,
-        sw_args='--queue-depth 1024',
+        cls=P4Switch
     )
     edges.append(switch)
 
@@ -108,7 +102,7 @@ def simple_topology(start=True) -> Mininet:
         s3 = cores[2]
         s4 = cores[3]
         
-        # Path 3 TEST
+        # Path 3
         link = net.addLink(s1, s2, port1=2, port2=2, bw=LINK_SPEED)
         # info(f"*** Created link {link}\n")
         link = net.addLink(s2, s3, port1=3, port2=2, bw=LINK_SPEED)
@@ -116,11 +110,11 @@ def simple_topology(start=True) -> Mininet:
         link = net.addLink(s3, s4, port1=3, port2=2, bw=LINK_SPEED)
         # info(f"*** Created link {link}\n")
 
-        # Path 1 TEST
+        # Path 1
         link = net.addLink(s2, s4, port1=5, port2=4, bw=LINK_SPEED)
         # info(f"*** Created link {link}\n")
 
-        # Path 2 TEST
+        # Path 2
         link = net.addLink(s1, s3, port1=4, port2=4, bw=LINK_SPEED)
         # info(f"*** Created link {link}\n")
 
@@ -138,119 +132,6 @@ def simple_topology(start=True) -> Mininet:
         net.stop()
         raise e
 
-
-# TODO(e1,10) Could be made generic with a decorator
-
-
-def _add_config_e1(net: Mininet, command: str) -> Mininet:
-    """Net needs to be stopped"""
-    e1 = net.getNodeByName("e1")
-    s1 = net.getNodeByName("s1")
-    links = net.delLinkBetween(e1, s1, allLinks=True)
-    assert len(links) == 1, (
-        f"❌ Expected 1 link to be removed between e1 and s1. Removed {len(links)} links."
-    )
-    h1 = net.getNodeByName("h1")
-    links = net.delLinkBetween(e1, h1, allLinks=True)
-    assert len(links) == 1, (
-        f"❌ Expected 1 link to be removed between e1 and h1. Removed {len(links)} links."
-    )
-    h11 = net.getNodeByName("h11")
-    links = net.delLinkBetween(e1, h11, allLinks=True)
-    assert len(links) == 1, (
-        f"❌ Expected 1 link to be removed between e1 and h11. Removed {len(links)} links."
-    )
-    e1.stop()
-    net.delNode(e1)
-
-    # read the network configuration
-    base_commands = Path.join(polka_config_path, "e1-commands.txt")
-    with open(base_commands, "r") as f:
-        commands = f.read()
-    commands += command
-
-    # Save the new configuration
-    savepath = Path.join(polka_config_path, "e1-commands-overwritten.txt")
-    with open(savepath, "w") as f:
-        f.write(commands)
-
-    # add P4 switches (edge)
-    e1 = net.addSwitch(
-        "e1",
-        netcfg=True,
-        json=Path.join(polka_json_path, "polka-edge.json"),
-        thriftport=EDGE_THRIFT_CORE_OFFSET + 1,
-        switch_config=savepath,
-        loglevel="debug",
-        cls=P4Switch,
-    )
-
-    # Link as before
-    net.addLink(e1, h1, port1=1, port2=0, bw=LINK_SPEED)
-    net.addLink(e1, h11, port1=0, port2=0, bw=LINK_SPEED)
-    net.addLink(e1, s1, port1=2, port2=1, bw=LINK_SPEED)
-
-    return net
-
-
-def _add_config_e10(net: Mininet, command: str) -> Mininet:
-    """Net needs to be stopped"""
-    e10 = net.get("e10")
-    s10 = net.get("s10")
-    links = net.delLinkBetween(e10, s10, allLinks=True)
-    assert len(links) == 1, (
-        f"❌ Expected 1 link to be removed between e10 and s10. Removed {len(links)} links."
-    )
-    h10 = net.get("h10")
-    links = net.delLinkBetween(e10, h10, allLinks=True)
-    assert len(links) == 1, (
-        f"❌ Expected 1 link to be removed between e10 and h10. Removed {len(links)} links."
-    )
-    e10.stop()
-    net.delNode(e10)
-
-    # read the network configuration
-    base_commands = Path.join(polka_config_path, "e10-commands.txt")
-    with open(base_commands, "r") as f:
-        commands = f.read()
-    commands += command
-
-    # Save the new configuration
-    savepath = Path.join(polka_config_path, "e10-commands-overwritten.txt")
-    with open(savepath, "w") as f:
-        f.write(commands)
-
-    # add P4 switches (edge)
-    e10 = net.addSwitch(
-        "e10",
-        netcfg=True,
-        json=Path.join(polka_json_path, "polka-edge.json"),
-        thriftport=EDGE_THRIFT_CORE_OFFSET + 10,
-        switch_config=savepath,
-        loglevel="debug",
-        cls=P4Switch,
-    )
-
-    # Link as before
-    net.addLink(e10, h10, port1=1, port2=0, bw=LINK_SPEED)
-    net.addLink(e10, s10, port1=2, port2=1, bw=LINK_SPEED)
-
-    return net
-
-
-def set_seed_e1(net: Mininet, seed: int) -> Mininet:
-    return _add_config_e1(net, f"table_add config seed 0 => {seed}")
-
-
-def set_seed_e10(net: Mininet, seed: int) -> Mininet:
-    return _add_config_e10(net, f"table_add config seed 0 => {seed}")
-
-
-def connect_to_core_switch(switch_offset):
-    """Sets common parameters for connecting to a core switch on this topology"""
-    return thrift_connect_standard("0.0.0.0", CORE_THRIFT_CORE_OFFSET + switch_offset)
-
-
 def all_ifaces(net: Mininet):
     return [
         iface
@@ -258,3 +139,115 @@ def all_ifaces(net: Mininet):
         for iface in switch.intfNames()
         if iface != "lo"
     ]
+
+# from .thrift import thrift_connect_standard
+
+# TODO(e1,10) Could be made generic with a decorator
+
+# def _add_config_e1(net: Mininet, command: str) -> Mininet:
+#     """Net needs to be stopped"""
+#     e1 = net.getNodeByName("e1")
+#     s1 = net.getNodeByName("s1")
+#     links = net.delLinkBetween(e1, s1, allLinks=True)
+#     assert len(links) == 1, (
+#         f"❌ Expected 1 link to be removed between e1 and s1. Removed {len(links)} links."
+#     )
+#     h1 = net.getNodeByName("h1")
+#     links = net.delLinkBetween(e1, h1, allLinks=True)
+#     assert len(links) == 1, (
+#         f"❌ Expected 1 link to be removed between e1 and h1. Removed {len(links)} links."
+#     )
+#     h11 = net.getNodeByName("h11")
+#     links = net.delLinkBetween(e1, h11, allLinks=True)
+#     assert len(links) == 1, (
+#         f"❌ Expected 1 link to be removed between e1 and h11. Removed {len(links)} links."
+#     )
+#     e1.stop()
+#     net.delNode(e1)
+
+#     # read the network configuration
+#     base_commands = Path.join(polka_config_path, "e1-commands.txt")
+#     with open(base_commands, "r") as f:
+#         commands = f.read()
+#     commands += command
+
+#     # Save the new configuration
+#     savepath = Path.join(polka_config_path, "e1-commands-overwritten.txt")
+#     with open(savepath, "w") as f:
+#         f.write(commands)
+
+#     # add P4 switches (edge)
+#     e1 = net.addSwitch(
+#         "e1",
+#         netcfg=True,
+#         json=Path.join(polka_json_path, "polka-edge.json"),
+#         thriftport=EDGE_THRIFT_CORE_OFFSET + 1,
+#         switch_config=savepath,
+#         loglevel="debug",
+#         cls=P4Switch,
+#     )
+
+#     # Link as before
+#     net.addLink(e1, h1, port1=1, port2=0, bw=LINK_SPEED)
+#     net.addLink(e1, h11, port1=0, port2=0, bw=LINK_SPEED)
+#     net.addLink(e1, s1, port1=2, port2=1, bw=LINK_SPEED)
+
+#     return net
+
+
+# def _add_config_e10(net: Mininet, command: str) -> Mininet:
+#     """Net needs to be stopped"""
+#     e10 = net.get("e10")
+#     s10 = net.get("s10")
+#     links = net.delLinkBetween(e10, s10, allLinks=True)
+#     assert len(links) == 1, (
+#         f"❌ Expected 1 link to be removed between e10 and s10. Removed {len(links)} links."
+#     )
+#     h10 = net.get("h10")
+#     links = net.delLinkBetween(e10, h10, allLinks=True)
+#     assert len(links) == 1, (
+#         f"❌ Expected 1 link to be removed between e10 and h10. Removed {len(links)} links."
+#     )
+#     e10.stop()
+#     net.delNode(e10)
+
+#     # read the network configuration
+#     base_commands = Path.join(polka_config_path, "e10-commands.txt")
+#     with open(base_commands, "r") as f:
+#         commands = f.read()
+#     commands += command
+
+#     # Save the new configuration
+#     savepath = Path.join(polka_config_path, "e10-commands-overwritten.txt")
+#     with open(savepath, "w") as f:
+#         f.write(commands)
+
+#     # add P4 switches (edge)
+#     e10 = net.addSwitch(
+#         "e10",
+#         netcfg=True,
+#         json=Path.join(polka_json_path, "polka-edge.json"),
+#         thriftport=EDGE_THRIFT_CORE_OFFSET + 10,
+#         switch_config=savepath,
+#         loglevel="debug",
+#         cls=P4Switch,
+#     )
+
+#     # Link as before
+#     net.addLink(e10, h10, port1=1, port2=0, bw=LINK_SPEED)
+#     net.addLink(e10, s10, port1=2, port2=1, bw=LINK_SPEED)
+
+#     return net
+
+
+# def set_seed_e1(net: Mininet, seed: int) -> Mininet:
+#     return _add_config_e1(net, f"table_add config seed 0 => {seed}")
+
+
+# def set_seed_e10(net: Mininet, seed: int) -> Mininet:
+#     return _add_config_e10(net, f"table_add config seed 0 => {seed}")
+
+
+# def connect_to_core_switch(switch_offset):
+#     """Sets common parameters for connecting to a core switch on this topology"""
+#     return thrift_connect_standard("0.0.0.0", CORE_THRIFT_CORE_OFFSET + switch_offset)

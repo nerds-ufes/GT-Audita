@@ -1,6 +1,6 @@
 from .siphash import siphash
 from .polka_nhop import Node
-from .linear_nodes import LINEAR_NODES
+from ..linear_topology.linear_nodes import LINEAR_NODES
 from .simple_nodes import SIMPLE_NODES
 from hashlib import sha256
 
