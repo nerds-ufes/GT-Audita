@@ -305,7 +305,7 @@ def default():
 
         sniff = start_sniffing(net, 2, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
-        integrity(net)
+        integrity(net, linear_flows)
 
         # Time to finish printing the logs
         sleep(2)  
