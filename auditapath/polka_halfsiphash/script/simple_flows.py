@@ -7,7 +7,8 @@ flows = {
         "host_dst":"h6",
         "ip_dst":"10.0.6.6",
         "port_dst":"0",
-        "current_route": 75440656914980,
+        "thriftport":50101,
+        "current_route":75440656914980,
         "routes": {
             "1":75440656914980,
             "2":222884173467157,
@@ -23,7 +24,8 @@ flows = {
         "host_dst":"h7",
         "ip_dst":"10.0.7.7",
         "port_dst":"0",
-        "current_route": 75440656914980,
+        "thriftport":50101,
+        "current_route":75440656914980,
         "routes": {
             "1":75440656914980,
             "2":222884173467157,
@@ -39,7 +41,8 @@ flows = {
         "host_dst":"h8",
         "ip_dst":"10.0.8.8",
         "port_dst":"0",
-        "current_route": 75440656914980,
+        "thriftport":50101,
+        "current_route":75440656914980,
         "routes": {
             "1":75440656914980,
             "2":222884173467157,
@@ -55,7 +58,8 @@ flows = {
         "host_dst":"h9",
         "ip_dst":"10.0.9.9",
         "port_dst":"0",
-        "current_route": 75440656914980,
+        "thriftport":50101,
+        "current_route":75440656914980,
         "routes": {
             "1":75440656914980,
             "2":222884173467157,
@@ -71,7 +75,8 @@ flows = {
         "host_dst":"h10",
         "ip_dst":"10.0.10.10",
         "port_dst":"0",
-        "current_route": 75440656914980,
+        "thriftport":50101,
+        "current_route":75440656914980,
         "routes": {
             "1":75440656914980,
             "2":222884173467157,
@@ -87,7 +92,8 @@ flows = {
         "host_dst":"h1",
         "ip_dst":"10.0.1.1",
         "port_dst":"0",
-        "current_route": 215038458956314,
+        "thrift_port":50104,
+        "current_route":215038458956314,
         "routes": {
             "1":165772661694262,
             "2":215038458956314,
@@ -103,7 +109,8 @@ flows = {
         "host_dst":"h2",
         "ip_dst":"10.0.2.2",
         "port_dst":"0",
-        "current_route": 215038458956314,
+        "thriftport":50104,
+        "current_route":215038458956314,
         "routes": {
             "1":165772661694262,
             "2":215038458956314,
@@ -119,7 +126,8 @@ flows = {
         "host_dst":"h3",
         "ip_dst":"10.0.3.3",
         "port_dst":"0",
-        "current_route": 215038458956314,
+        "thriftport":50104,
+        "current_route":215038458956314,
         "routes": {
             "1":165772661694262,
             "2":215038458956314,
@@ -135,7 +143,8 @@ flows = {
         "host_dst":"h4",
         "ip_dst":"10.0.4.4",
         "port_dst":"0",
-        "current_route": 215038458956314,
+        "thriftport":50104,
+        "current_route":215038458956314,
         "routes": {
             "1":165772661694262,
             "2":215038458956314,
@@ -151,7 +160,8 @@ flows = {
         "host_dst":"h5",
         "ip_dst":"10.0.5.5",
         "port_dst":"0",
-        "current_route": 215038458956314,
+        "thriftport":50104,
+        "current_route":215038458956314,
         "routes": {
             "1":165772661694262,
             "2":215038458956314,

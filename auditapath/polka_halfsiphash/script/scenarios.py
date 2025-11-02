@@ -222,7 +222,7 @@ def integrity(net: Mininet, flows):
                         host_src = net.get(flow["host_src"])
                         host_dst = net.get(flow["host_dst"])
                         
-                        client, transport = connect_to_switch(50101)
+                        client, transport = connect_to_switch(flow["thrift_port"])
                         if client:
                             entries = client.bm_mt_get_entries(0, "MyIngress.TunnelEncap.tunnel_encap_process_sr")
                             handle_encontrado = None
