@@ -50,7 +50,9 @@ if BMV2_TOOLS_PATH not in sys.path:
 from thrift import Thrift
 from thrift.transport import TSocket
 from thrift.transport import TTransport
+# (Suas outras importações do thrift...)
 from thrift.protocol import TBinaryProtocol
+from thrift.protocol import TMultiplexedProtocol  # <-- ADICIONE ESTA LINHA
 
 from bm_runtime.standard import Standard
 from bm_runtime.standard.ttypes import *
@@ -58,24 +60,31 @@ from bm_runtime.standard.ttypes import *
 def connect_to_switch(thrift_port, thrift_host='localhost'):
     """
     Conecta-se a um servidor Thrift do simple_switch (bmv2) e retorna o cliente e o transporte.
+    Esta versão usa TMultiplexedProtocol para corrigir o erro.
     """
-    print(f"Conectando ao switch em {thrift_host}:{thrift_port}...")
+    print(f"Conectando ao switch (multiplexado) em {thrift_host}:{thrift_port}...")
     
-    # 1. Cria o 'socket' e o 'transport' (canal de comunicação)
+    # 1. Cria o 'socket' e o 'transport'
     transport = TSocket.TSocket(thrift_host, thrift_port)
     transport = TTransport.TBufferedTransport(transport)
     
-    # 2. Cria o 'protocol' (formato da mensagem, binário)
-    protocol = TBinaryProtocol.TBinaryProtocol(transport)
+    # 2. Cria o 'protocol' base (binário)
+    base_protocol = TBinaryProtocol.TBinaryProtocol(transport)
     
-    # 3. Cria o Cliente (a interface que tem os comandos)
+    # 3. CRIA O 'PROTOCOL' MULTIPLEXADO (A CORREÇÃO)
+    #    Nós "envelopamos" o protocolo base e especificamos o nome do serviço
+    #    Para o simple_switch (Standard.py), o nome do serviço é "standard"
+    protocol = TMultiplexedProtocol.TMultiplexedProtocol(base_protocol, "standard")
+                                                         
+    # 4. Cria o Cliente (usando o protocolo multiplexado)
     client = Standard.Client(protocol)
     
     try:
-        # 4. Abre a conexão
+        # 5. Abre a conexão
         transport.open()
         print("Conexão estabelecida com sucesso.")
         return client, transport
+    
     except Thrift.TException as tx:
         print(f"Erro ao conectar ao switch na porta {thrift_port}: {tx.message}")
         return None, None
@@ -132,14 +141,14 @@ def integrity(net: Mininet, flows):
         for idx, flow in f.items():
             host_src = flow["host_src"]
             host_dst = flow["host_dst"]
-            print(f"    *** ({idx})-Flow (from {host_src} -> to {host_dst}")
+            print(f"    *** ({idx})-Flow (from {host_src} -> to {host_dst})")
 
     while(1):
         action = input(menu + "\n--- Action: ")
 
         if action == "1":
             print("\n*** Choose flow to audit:")
-            print_flows(flows)
+            print_flows(flows)30 dias 
             print(f"    *** ({len(flows)})-All flows")
             idx_flow = input("--- Flow: ")
             rate = input("--- -i(seconds): ")
@@ -233,7 +242,8 @@ def integrity(net: Mininet, flows):
                                     # IPs são 4 bytes.
                                     import socket
                                     # :4 seleciona os 4 bytes do IP
-                                    ip_addr = socket.inet_ntoa(prefix[:4]) 
+                                    ip_addr = socket.inet_ntoa(prefix[:4])
+                                    print(type(ip_addr), ip_addr)
                                     ip_str_com_prefixo = f"{ip_addr}/{prefix_len}"
                                     
                                     # 3. VERIFICAR SE É A ROTA QUE QUEREMOS
