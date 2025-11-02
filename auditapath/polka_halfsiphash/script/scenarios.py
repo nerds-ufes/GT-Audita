@@ -293,8 +293,15 @@ def default():
         # sleep for a bit to let the network stabilize
         sleep(3)
         
-        call_deploy_flow_contract(hash_flow_id("10.0.1.1", "0", "10.0.10.10", "0"), polka_route_ids["h1"]["h10"])
-        call_deploy_flow_contract(hash_flow_id("10.0.10.10", "0", "10.0.1.1", "0"), polka_route_ids["h1"]["h10"])
+        for flow in linear_flows.values():
+            flow_id = hash_flow_id(
+                flow["ip_src"], 
+                flow["port_src"], 
+                flow["ip_dst"], 
+                flow["port_dst"]
+            )
+            flow["flow_id"] = flow_id
+            call_deploy_flow_contract(flow_id, flow["current_route"])
 
         sniff = start_sniffing(net, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
