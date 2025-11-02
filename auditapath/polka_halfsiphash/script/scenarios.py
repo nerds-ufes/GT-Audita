@@ -40,10 +40,10 @@ from .utils import polka_route_ids
 
 from .simple_flows import flows as simple_flows
 
-import os.environ as Environ
+import os
 import sys
 
-BMV2_TOOLS_PATH = Environ.get('BMV2_TOOLS_PATH')
+BMV2_TOOLS_PATH = os.environ.get('BMV2_TOOLS_PATH')
 if BMV2_TOOLS_PATH not in sys.path:
     sys.path.append(BMV2_TOOLS_PATH)
 
@@ -148,7 +148,7 @@ def integrity(net: Mininet, flows):
 
         if action == "1":
             print("\n*** Choose flow to audit:")
-            print_flows(flows)30 dias 
+            print_flows(flows) 
             print(f"    *** ({len(flows)})-All flows")
             idx_flow = input("--- Flow: ")
             rate = input("--- -i(seconds): ")
