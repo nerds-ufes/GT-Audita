@@ -38,8 +38,53 @@ from mn_wifi.cli import CLI
 from .utils import polka_route_ids
 # T = TypeVar("T")
 
-import subprocess
 from .simple_flows import flows as simple_flows
+
+import os.environ as Environ
+import sys
+
+BMV2_TOOLS_PATH = Environ.get('BMV2_TOOLS_PATH')
+if BMV2_TOOLS_PATH not in sys.path:
+    sys.path.append(BMV2_TOOLS_PATH)
+
+from thrift import Thrift
+from thrift.transport import TSocket
+from thrift.transport import TTransport
+from thrift.protocol import TBinaryProtocol
+
+from bm_runtime.standard import Standard
+from bm_runtime.standard.ttypes import *
+
+def connect_to_switch(thrift_port, thrift_host='localhost'):
+    """
+    Conecta-se a um servidor Thrift do simple_switch (bmv2) e retorna o cliente e o transporte.
+    """
+    print(f"Conectando ao switch em {thrift_host}:{thrift_port}...")
+    
+    # 1. Cria o 'socket' e o 'transport' (canal de comunicação)
+    transport = TSocket.TSocket(thrift_host, thrift_port)
+    transport = TTransport.TBufferedTransport(transport)
+    
+    # 2. Cria o 'protocol' (formato da mensagem, binário)
+    protocol = TBinaryProtocol.TBinaryProtocol(transport)
+    
+    # 3. Cria o Cliente (a interface que tem os comandos)
+    client = Standard.Client(protocol)
+    
+    try:
+        # 4. Abre a conexão
+        transport.open()
+        print("Conexão estabelecida com sucesso.")
+        return client, transport
+    except Thrift.TException as tx:
+        print(f"Erro ao conectar ao switch na porta {thrift_port}: {tx.message}")
+        return None, None
+
+def disconnect_from_switch(transport):
+    """Fecha a conexão de transporte."""
+    if transport:
+        print("Fechando conexão com o switch.")
+        transport.close()
 
 def ifaces_fn(net: Mininet):
     import re
@@ -133,7 +178,7 @@ def integrity(net: Mininet, flows):
                     call_get_flow_compliance(flow["flow_id"])
             
             elif idx_flow in flows:
-                call_get_flow_compliance(flow[idx_flow]["flow_id"])
+                call_get_flow_compliance(flows[idx_flow]["flow_id"])
             
             else:
                 print("*** Invalid value of Flow")
@@ -163,22 +208,70 @@ def integrity(net: Mininet, flows):
                 route_idx = input("\n--- Route: ")
                 
                 if route_idx in flow["routes"]:
-                    if flow["current_route"] != flow["routes"]["route_idx"]:
-                        call_set_new_route(flow["flow_id"], flow["routes"]["route_idx"])
+                    if flow["current_route"] != flow["routes"][route_idx]:
+                        route_id = flow["routes"][route_idx]
+                        call_set_new_route(flow["flow_id"], route_id)
+                        host_src = net.get(flow["host_src"])
+                        host_dst = net.get(flow["host_dst"])
                         
-                        cmd = [
-                            "simple_switch_CLI",
-                            "--thrift-port",
-                            f"5010{src_host.name[-1]}",
-                        ]
-                        commands = f"table_delete tunnel_encap_process_sr 1\ntable_add tunnel_encap_process_sr add_sourcerouting_header {dst_host.IP()}/32 => 2 1 {dst_host.MAC()} {routeId}\nEOF\n"
-                        subprocess.run(
-                            cmd,
-                            input=commands,
-                            capture_output=True,
-                            text=True,
-                            check=True
-                        )
+                        client, transport = connect_to_switch(50101)
+                        if client:
+                            entries = client.bm_mt_get_entries(0, "tunnel_encap_process_sr")
+                            handle_encontrado = None
+                            for entry in entries:
+                                # entry.match_key é uma lista de objetos BmMatchParam
+                                # Precisamos extrair o IP dela
+                                match_key = entry.match_key[0]
+
+                                # O objeto 'match_key' tem tipos diferentes (exato, lpm, ternário)
+                                # No seu caso, é 'lpm' (Longest Prefix Match)
+                                if match_key.type == BmMatchParamType.LPM:
+                                    prefix = match_key.lpm.key
+                                    prefix_len = match_key.lpm.prefix_length
+                                    
+                                    # O 'prefix' é retornado em bytes. Precisamos decodificar.
+                                    # IPs são 4 bytes.
+                                    import socket
+                                    # :4 seleciona os 4 bytes do IP
+                                    ip_addr = socket.inet_ntoa(prefix[:4]) 
+                                    ip_str_com_prefixo = f"{ip_addr}/{prefix_len}"
+                                    
+                                    # 3. VERIFICAR SE É A ROTA QUE QUEREMOS
+                                    if ip_addr == host_dst.IP():
+                                        handle_encontrado = entry.entry_handle
+                                        print(f"!!! Handle encontrado para {IP_PARA_MODIFICAR}: {handle_encontrado}")
+                                        break # Achamos, saia do loop
+                            
+                            if handle_encontrado is not None:
+                                print(f"Modificando a entrada com handle {handle_encontrado}...") 
+                                # 6, 1, "00:00:00:00:01:01", 12345
+                                # Você precisa converter isso para bytes.
+                                new_action_params = [
+                                    (6).to_bytes(2, 'big'),
+                                    (1).to_bytes(1, 'big'),
+                                    bytes.fromhex(host_dst.MAC().replace(':', '')),
+                                    (route_id).to_bytes(8, 'big') # Assumindo 8 bytes
+                                ]
+                                client.bm_mt_modify_entry(
+                                    0, "tunnel_encap_process_sr", handle_encontrado, "add_sourcerouting_header", new_action_params
+                                )
+
+                            else:
+                                print(f"Nenhuma entrada encontrada para {host_dst.IP()}.")
+
+                        # cmd = [
+                        #     "simple_switch_CLI",
+                        #     "--thrift-port",
+                        #     f"5010{host_src.name[-1]}",
+                        # ]
+                        # commands = f"table_delete tunnel_encap_process_sr 1\ntable_add tunnel_encap_process_sr add_sourcerouting_header {host_dst.IP()}/32 => 2 1 {host_dst.MAC()} {route_id}\nEOF\n"
+                        # subprocess.run(
+                        #     cmd,
+                        #     input=commands,
+                        #     capture_output=True,
+                        #     text=True,
+                        #     check=True
+                        # )
 
                     else:
                         print("*** This route is the currente route")
@@ -188,15 +281,6 @@ def integrity(net: Mininet, flows):
 
             else:
                 print("*** Invalid Flow")
-
-            
-            cmd = [
-                "simple_switch_CLI",
-                "--thrift-port",
-                f"5010{src_host.name[-1]}",
-            ]
-            commands = f"table_delete tunnel_encap_process_sr 1\ntable_add tunnel_encap_process_sr add_sourcerouting_header {dst_host.IP()}/32 => 2 1 {dst_host.MAC()} {routeId}\nEOF\n"
-            subprocess.run(cmd, input=commands, capture_output=True, text=True, check=True)
 
         elif action == "5":
             break
