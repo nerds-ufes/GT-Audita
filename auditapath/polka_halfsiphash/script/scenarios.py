@@ -27,8 +27,9 @@ from ..linear_topology.linear_topology import (
     # set_seed_e1,
     # set_seed_e10,
 )
+from ..linear_topology.linear_topology import flows as linear_flows
 # from .calc_digests import calc_digests
-from .simple import simple_topology
+from ..simple_topology.simple_topology import simple_topology
 from time import sleep
 
 # from script.tester import linear_topology, Polka, PolkaProbe, integrity, start_sniffing
@@ -38,7 +39,7 @@ from mn_wifi.cli import CLI
 from .utils import polka_route_ids
 # T = TypeVar("T")
 
-from .simple_flows import flows as simple_flows
+from ..simple_topology.simple_flows import flows as simple_flows
 
 import os
 import sys
@@ -50,12 +51,11 @@ if BMV2_TOOLS_PATH not in sys.path:
 from thrift import Thrift
 from thrift.transport import TSocket
 from thrift.transport import TTransport
-# (Suas outras importações do thrift...)
 from thrift.protocol import TBinaryProtocol
-from thrift.protocol import TMultiplexedProtocol  # <-- ADICIONE ESTA LINHA
+from thrift.protocol import TMultiplexedProtocol
 
-from bm_runtime.standard import Standard
-from bm_runtime.standard.ttypes import *
+from .bm_runtime.standard import Standard
+from .bm_runtime.standard.ttypes import *
 
 def connect_to_switch(thrift_port, thrift_host='localhost'):
     """
