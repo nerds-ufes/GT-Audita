@@ -455,6 +455,16 @@ def linear(case):
                 flow["flow_id"] = flow_id
                 call_deploy_flow_contract(flow_id, flow["current_route"])
 
+        else:
+            for flow in linear_flows.values():
+                flow_id = hash_flow_id(
+                    flow["ip_src"], 
+                    flow["port_src"], 
+                    flow["ip_dst"], 
+                    flow["port_dst"]
+                )
+                flow["flow_id"] = flow_id
+
         sniff = start_sniffing(net, 2, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
         integrity(net, linear_flows)
@@ -486,6 +496,7 @@ def simple():
 
         # sleep for a bit to let the network stabilize
         sleep(3)
+        
         deploy_flow = input("--- Deploy flow[y/n]: ")
         if deploy_flow == "y":
             for flow in simple_flows.values():
@@ -497,6 +508,16 @@ def simple():
                 )
                 flow["flow_id"] = flow_id
                 call_deploy_flow_contract(flow_id, flow["current_route"])
+
+        else:
+            for flow in simple_flows.values():
+                flow_id = hash_flow_id(
+                    flow["ip_src"], 
+                    flow["port_src"], 
+                    flow["ip_dst"], 
+                    flow["port_dst"]
+                )
+                flow["flow_id"] = flow_id
 
         sniff = start_sniffing(net, 6, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
