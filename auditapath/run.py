@@ -31,6 +31,8 @@ if __name__ == "__main__":
             case = int(case)
             if (case > 0 and case < 7):
                 scenarios.linear(case)
+        except ValueError:
+            pass
         finally:
             print("*** Invalid case!\n")
     else:
