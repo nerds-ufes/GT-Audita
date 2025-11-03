@@ -3,17 +3,25 @@ Network tests
 """
 
 import os.path as Path
-from time import sleep
-from mn_wifi.bmv2 import P4Switch
-from mn_wifi.net import info, Mininet
-from scapy.all import Packet
-
-from .scapy import Polka, PolkaProbe, start_sniffing
-
-from .call_api import call_deploy_flow_contract, call_set_ref_sig, hash_flow_id, call_log_probe, call_get_flow_compliance, call_get_flow_compliance_consolidation, call_set_new_route 
-
 from os import environ as Environ
 from sys import path as sys_path
+from time import sleep
+
+from mn_wifi.bmv2 import P4Switch
+from mn_wifi.net import info, Mininet
+
+# from scapy.all import Packet
+from .scapy import Polka, PolkaProbe, start_sniffing
+
+from .call_api import (
+    call_deploy_flow_contract,
+    call_set_ref_sig,
+    hash_flow_id,
+    call_log_probe,
+    call_get_flow_compliance,
+    call_get_flow_compliance_consolidation,
+    call_set_new_route
+) 
 
 BMV2_TOOLS_PATH = Environ.get('BMV2_TOOLS_PATH')
 if BMV2_TOOLS_PATH not in sys_path:
@@ -97,7 +105,7 @@ def sniff_cb(pkt: Packet):
 
 def integrity(net: Mininet, flows):
     """
-    Test the integrity of the network, this is to be used in a suite of testsdicionando um novo host e um link para o switch s1 dinamicamentei
+    Integrity of the network
     """
 
     menu = """
@@ -123,23 +131,23 @@ def integrity(net: Mininet, flows):
             print(f"    *** ({len(flows)})-All flows")
             idx_flow = input("--- Flow: ")
             rate = input("--- -i(seconds): ")
-            duration = input("--- -w(seconds): ")
+            qtt_probes = input("--- -c(qtt): ")
 
             try:
                 int(idx_flow)
                 float(rate)
-                float(duration)
+                float(qtt_probes)
 
                 if idx_flow == str(len(flows)):
                     for flow in flows.values():
                         host_src = net.get(flow["host_src"])
                         ip_dst = flow["ip_dst"]
-                        host_src.cmd(f"ping -i {rate} -w {duration} {ip_dst} &")
+                        host_src.cmd(f"ping -i {rate} -c {qtt_probes} {ip_dst} &")
 
                 elif idx_flow in flows:
                     host_src = net.get(flows[idx_flow]["host_src"])
                     ip_dst = flows[idx_flow]["ip_dst"]
-                    host_src.cmd(f"ping -i {rate} -w {duration} {ip_dst} &")
+                    host_src.cmd(f"ping -i {rate} -c {qtt_probes} {ip_dst} &")
 
                 else:
                     print("*** Invalid value of Flow")
@@ -255,10 +263,7 @@ def integrity(net: Mininet, flows):
             print("*** Invalid action")
 
 def linear(case):
-    """
-    Collect the hashes (all intermediary) from the network
-    """
-    DEFAULT = 1
+    
     ADDITION = 2
     PARTIAL_DETOUR = 3
     COMPLETE_DETOUR = 4
@@ -278,21 +283,7 @@ def linear(case):
     net = linear_topology(start=False)
     
     if case == ADDITION:
-        """
-        Test if the network is protected against an addition attack
-
-        An addition attack is when a new switch is added to the network between two existing switches,
-        and the existing connections of surrounding switches = linear_topology()
-        are not touched.
-        """
-
         info("*** ADDITION TEST ***\n")
-        # Switch ports
-        # Generally, on core POV:
-        # eth0 = lo?
-        # eth1 = edge
-        # eth2 = previous
-        # eth3 = next
         compromised, next_sw = net.switches[4:6]
         info(f"*** Replacing {compromised.name}'s links with compromised route\n")
 
@@ -316,33 +307,10 @@ def linear(case):
         info(f"*** Created link {link}\n")
         link = net.addLink(attacker, next_sw, port1=1, port2=2, bw=LINK_SPEED)
         info(f"*** Created link {link}\n")
-        # net.addLink(compromised, attacker, bw=LINK_SPEED)
-        # net.addLink(attacker, next_sw, bw=LINK_SPEED)
-
-        # The "next" is now port #4, which is mostly unused
-        # The attacker will take the port #3 instead.
-        # This is still used in traffic in the s6 -> s5 -> s4 direction
-        # new_link = net.addLink(compromised, next_sw, port1=4, port2=2, bw=LINK_SPEED)
-        # info(f"*** Created link {new_link}\n")
-
-        # net = set_seed_e1(net, 0xABADCAFE)
-        # net = set_seed_e10(net, 0xBADDC0DE)
 
     elif case == PARTIAL_DETOUR:
-        """
-        passTest if the network is protected against a detour attack.
+        info("*** PARTIAL DETOUR CASE ***\n")
 
-        A detour attack is when a new switch is added to the network between two existing switches,
-        concurring with an existing switch, with the same connections as the existing switch.
-        """
-        info("*** PARTIAL DETOUR TEST ***\n")
-
-        # Switch ports
-        # Generally, on core POV:
-        # eth0 = lo?
-        # eth1 = edge
-        # eth2 = previous
-        # eth3 = next
         prev_sw, skipped, next_sw = net.switches[4:7]
         info(f"*** Replacing {prev_sw.name}'s links with compromised route\n")
 
@@ -375,24 +343,9 @@ def linear(case):
         info(f"*** Created link {link}\n")
         link = net.addLink(skipped, next_sw, port1=4, port2=2, bw=LINK_SPEED)
 
-        # net = set_seed_e1(net, 0xBADDC0DE)
-        # net = set_seed_e10(net, 0xDEADBEEF)
-
     elif case == COMPLETE_DETOUR:
-        """
-        Test if the network is protected against a detour attack.
 
-        A detour attack is when a new switch is added to the network between two existing switches,
-        concurring with an existing switch, with the same connections as the existing switch.
-        """
-
-        info("*** COMPLETE DETOUR TEST ***\n")
-        # Switch ports
-        # Generally, on core POV:
-        # eth0 = lo?
-        # eth1 = edge
-        # eth2 = previous
-        # eth3 = next
+        info("*** COMPLETE DETOUR CASW ***\n")
         start_sw = net.switches[0]
         next_start_sw = net.switches[1]
         prev_last_sw = net.switches[8]
@@ -441,19 +394,8 @@ def linear(case):
         info(f"*** Created link {link}\n")
 
     elif case == OUTOFORDER:
-        """
-        Test if the network is protected against an outoforder attack.
 
-        An outoforder attack is when the route is acessed using all defined router,
-            and no other routers, but their order differ.
-        """
-        info("*** OUTOFORDER TEST ***\n")
-        # Switch ports
-        # Generally, on core POV:
-        # eth0 = lo?
-        # eth1 = edge
-        # eth2 = previous
-        # eth3 = next
+        info("*** OUTOFORDER CASE ***\n")
         oor = net.switches[3:7]
         info("*** Replacing links with compromised route\n")
 
@@ -473,20 +415,9 @@ def linear(case):
         info(f"*** Created link {link}\n")
 
     elif case == SKIPPING:
-        """
-        Test if the network is protected against a skipping attack.
 
-        A skipping attack is when a route skips the core entirely and goes directly to the edge.
-        """
-
-        info("*** SKIPPING TEST ***\n")
+        info("*** SKIPPING CASE ***\n")
         
-        # Switch ports
-        # Generally, on core POV:
-        # eth0 = lo?
-        # eth1 = edge
-        # eth2 = previous
-        # eth3 = next
         prev_sw, skipped, next_sw = net.switches[3:6]
         info(f"*** Replacing {skipped.name}'s links with compromised route\n")
 
@@ -502,6 +433,9 @@ def linear(case):
         new_link = net.addLink(prev_sw, next_sw, port1=3, port2=2, bw=LINK_SPEED)
         info(f"*** Created link {new_link}\n")
     
+    else:
+        info("*** DEFAULT CASE ***\n")
+
     try:
         net.start()
         net.staticArp()
