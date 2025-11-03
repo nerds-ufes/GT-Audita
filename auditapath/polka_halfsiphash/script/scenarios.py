@@ -10,7 +10,7 @@ from time import sleep
 from mn_wifi.bmv2 import P4Switch
 from mn_wifi.net import info, Mininet
 
-# from scapy.all import Packet
+from scapy.all import Packet
 from .scapy import Polka, PolkaProbe, start_sniffing
 
 from .call_api import (
@@ -443,15 +443,17 @@ def linear(case):
         # sleep for a bit to let the network stabilize
         sleep(3)
         
-        for flow in linear_flows.values():
-            flow_id = hash_flow_id(
-                flow["ip_src"], 
-                flow["port_src"], 
-                flow["ip_dst"], 
-                flow["port_dst"]
-            )
-            flow["flow_id"] = flow_id
-            call_deploy_flow_contract(flow_id, flow["current_route"])
+        deploy_flow = input("--- Deploy flow[y/n]: ")
+        if deploy_flow == "y":
+            for flow in linear_flows.values():
+                flow_id = hash_flow_id(
+                    flow["ip_src"], 
+                    flow["port_src"], 
+                    flow["ip_dst"], 
+                    flow["port_dst"]
+                )
+                flow["flow_id"] = flow_id
+                call_deploy_flow_contract(flow_id, flow["current_route"])
 
         sniff = start_sniffing(net, 2, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
@@ -484,16 +486,17 @@ def simple():
 
         # sleep for a bit to let the network stabilize
         sleep(3)
-        
-        for flow in simple_flows.values():
-            flow_id = hash_flow_id(
-                flow["ip_src"], 
-                flow["port_src"], 
-                flow["ip_dst"], 
-                flow["port_dst"]
-            )
-            flow["flow_id"] = flow_id
-            call_deploy_flow_contract(flow_id, flow["current_route"])
+        deploy_flow = input("--- Deploy flow[y/n]: ")
+        if deploy_flow == "y":
+            for flow in simple_flows.values():
+                flow_id = hash_flow_id(
+                    flow["ip_src"], 
+                    flow["port_src"], 
+                    flow["ip_dst"], 
+                    flow["port_dst"]
+                )
+                flow["flow_id"] = flow_id
+                call_deploy_flow_contract(flow_id, flow["current_route"])
 
         sniff = start_sniffing(net, 6, ifaces_fn=ifaces_fn, cb=sniff_cb)
 
