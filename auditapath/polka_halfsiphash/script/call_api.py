@@ -2,7 +2,7 @@ from urllib import request, error
 import json
 
 from .scenarios import Polka, PolkaProbe
-from .utils import calc_digests, polka_route_ids, get_ingress_edge, calc_flow_id, hash_flow_id
+from .utils import calc_digests, get_ingress_edge, calc_flow_id, hash_flow_id
 
 ENDPOINT_URL = "http://localhost:5000/"
 EDGE_NODE_ADDRESS = "0xf17f52151EbEF6C7334FAD080c5704D77216b732"
