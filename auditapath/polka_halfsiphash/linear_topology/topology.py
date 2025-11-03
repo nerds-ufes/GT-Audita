@@ -16,7 +16,7 @@ CORE_THRIFT_CORE_OFFSET = 50000
 EDGE_THRIFT_CORE_OFFSET = 50100
 
 polka_json_path = Path.join(Path.split(Path.split(__file__)[0])[0], "polka")
-polka_config_path = Path.join(polka_json_path, "config_simple")
+polka_config_path = Path.join(polka_json_path, "config_linear")
 
 def _linear_topology_add_hosts(net: Mininet):
     hosts = []
