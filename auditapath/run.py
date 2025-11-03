@@ -1,7 +1,10 @@
 
 import polka_halfsiphash.script.scenarios as scenarios
+from mininet.log import setLogLevel, info, debug
 
 if __name__ == "__main__":
+
+    setLogLevel("info")
     
     topology_menu = """
 *** (1)-Simple
