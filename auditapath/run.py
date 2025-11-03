@@ -24,12 +24,14 @@ if __name__ == "__main__":
 
     if topology == "1":
         scenarios.simple()
+    
     elif topology == "2":
         case = input(case_menu + "\n--- Case: ")
-
-        if (case > 0 and case < 7):
-            scenarios.linear(case)
-        else:
+        try:
+            case = int(case)
+            if (case > 0 and case < 7):
+                scenarios.linear(case)
+        finally:
             print("*** Invalid case!\n")
     else:
         print("*** Invalid topology!\n")
