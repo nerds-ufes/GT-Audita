@@ -283,7 +283,7 @@ def linear(case):
     net = linear_topology(start=False)
     
     if case == ADDITION:
-        info("*** ADDITION TEST ***\n")
+        info("*** ADDITION CASE ***\n")
         compromised, next_sw = net.switches[4:6]
         info(f"*** Replacing {compromised.name}'s links with compromised route\n")
 
@@ -345,7 +345,7 @@ def linear(case):
 
     elif case == COMPLETE_DETOUR:
 
-        info("*** COMPLETE DETOUR CASW ***\n")
+        info("*** COMPLETE DETOUR CASE ***\n")
         start_sw = net.switches[0]
         next_start_sw = net.switches[1]
         prev_last_sw = net.switches[8]
