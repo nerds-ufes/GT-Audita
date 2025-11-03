@@ -24,31 +24,12 @@ if __name__ == "__main__":
 
     if topology == "1":
         scenarios.simple()
-    
     elif topology == "2":
-    
         case = input(case_menu + "\n--- Case: ")
 
-        if case == "1":
-            scenarios.default()
-
-        elif case == "2":
-            scenarios.addition()
-
-        elif case == "3":
-            scenarios.partial_detour()
-
-        elif case == "4":
-            scenarios.complete_detour()
-
-        elif case == "5":
-            scenarios.skipping()
-
-        elif case == "6":
-            scenarios.outoforder()
-
+        if (case > 0 and case < 7):
+            scenarios.linear(case)
         else:
             print("*** Invalid case!\n")
-    
     else:
         print("*** Invalid topology!\n")
