@@ -1,0 +1,1 @@
+FROM hyperledger/besu:25.2.2

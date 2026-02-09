@@ -1,0 +1,121 @@
+services:
+
+  # Serviço 1: A Blockchain
+  besu:
+    build: ./besu
+    image: auditapath-besu:latest
+    profiles: ["local"]
+    ports:
+      - "8545:8545"
+    restart: unless-stopped
+    volumes:
+      - besudata:/var/lib/besu
+    command: >
+      --network=dev
+      --rpc-http-cors-origins="all"
+      --rpc-http-enabled
+      --metrics-enabled
+      --metrics-port=9545
+      --host-allowlist="*"
+      --rpc-http-api=ETH,NET,WEB3,DEBUG,TXPOOL
+      --rpc-ws-enabled
+      --data-path=/var/lib/besu
+      --rpc-ws-api=ETH,NET,WEB3
+      --miner-enabled
+      --miner-coinbase="0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"
+      --logging=INFO
+      --rpc-http-max-active-connections=100000
+      --min-gas-price=0
+      --tx-pool-max-future-by-sender=1024
+
+  # Serviço 2: Deployer de contrato
+  deployer-local:
+    build: ./deployer
+    profiles: ["local"]
+    restart: on-failure
+    depends_on:
+      besu:
+        condition: service_healthy
+    volumes:
+      - contract-data:/data
+    environment:
+      - BLOCKCHAIN_HOST=http://besu:8545
+      - HARDHAT_IGNITION_CONFIRM_DEPLOYMENT=false
+
+  deployer-iliada:
+    build: ./deployer
+    profiles: ["iliada"]
+    restart: on-failure
+    volumes:
+      - contract-data:/data
+    environment:
+      - BLOCKCHAIN_HOST=http://200.137.0.26:21031
+      - HARDHAT_IGNITION_CONFIRM_DEPLOYMENT=false
+
+  # Serviço 3: A API de comunicação
+  api-local:
+    build: ./api
+    profiles: ["local"]
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+    depends_on:
+      deployer-local:
+        condition: service_completed_successfully
+    volumes:
+      - contract-data:/data
+    environment:
+      - BLOCKCHAIN_HOST=http://besu:8545
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+  api-iliada:
+    build: ./api
+    profiles: ["iliada"]
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+    depends_on:
+      deployer-iliada:
+        condition: service_completed_successfully
+    volumes:
+      - contract-data:/data
+    environment:
+      - BLOCKCHAIN_HOST=http://200.137.0.26:21031
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Serviço 4: O Mininet
+  mininet:
+    build: ./mininet
+    profiles:
+      - cli
+    depends_on:
+      api-local:
+        condition: service_healthy
+        required: false
+      api-iliada:
+        condition: service_healthy
+        required: false
+    privileged: true
+    stdin_open: true
+    tty: true
+    network_mode: "host"
+    volumes:
+      - /lib/modules:/lib/modules
+      - /sys/:/sys
+      - /sys/kernel/debug:/sys/kernel/debug
+      - /var/run/netns:/var/run/netns
+      - contract-data:/data
+
+volumes:
+  besudata:
+  contract-data:
