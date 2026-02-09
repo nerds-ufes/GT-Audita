@@ -1,0 +1,12 @@
+services:
+  audita:
+    image: ghcr.io/luizfelmach/audita:latest
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./audita/:/etc/audita:ro
+      - auditalogs:/var/log/
+
+volumes:
+  auditalogs:
+    external: true

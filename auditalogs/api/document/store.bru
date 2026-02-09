@@ -1,0 +1,17 @@
+meta {
+  name: store
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "chave": "1"
+  }
+}

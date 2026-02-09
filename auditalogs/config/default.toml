@@ -1,0 +1,11 @@
+host = "0.0.0.0"
+name = "worker"
+port = 8080
+queue_size = 8192
+batch_size = 5
+
+[ethereum]
+max_tx_pending = 50
+
+[elastic]
+indices_pattern = "%Y.%m.%d"
